@@ -2,6 +2,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import math
 import matplotlib.pyplot as plt
+import sys
 
 def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
 
@@ -15,7 +16,7 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
     Icmax = Nv*80
 
     #Cbat = 270
-    Ebat = 300
+    #Ebat = 300
     #SOCdep = [0.8, 0.6, 0.7]
     #SOC_1 = [0.1, 0.2, 0.1]
     SOC_xtra = 0.01
@@ -117,6 +118,14 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
             #I_temp.append([v,i,I[v][i].x])
 
     print(I_temp)
+    status = m.Status
+    if status in (GRB. INF_OR_UNBD , GRB. INFEASIBLE , GRB. UNBOUNDED ):
+        print("The model cannot be solved because it is infeasible or unbounded ")
+        sys.exit(1)
+    if status != GRB.OPTIMAL:
+        print ("Optimization was stopped with status" + str( status ))
+        sys.exit(1)
+
 
     return I, TT, m, I_temp 
 

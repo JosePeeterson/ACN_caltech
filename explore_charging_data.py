@@ -66,7 +66,6 @@ for s in unique_space_id:
 del_t = 6/60 # every 6 minutes, in hours  
 hr_of_day = 00
 min_of_day = 00
-day_end = False
 Vbat = 410
 soc_init = SOC_1 = [0]*len(unique_space_id)
 Cbat = [270]*len(unique_space_id)
@@ -79,10 +78,12 @@ char_per = [0]*len(unique_space_id)
 
 print(datetime.now())
 
-for d in unique_connect_time_dates[0:1]: # index represents the date number
+for d in unique_connect_time_dates: # index represents the date number
+    print('\n')
     print(d)
+    print('soc1 = ', SOC_1)
     
-
+    day_end = False
 
     while( not day_end):
 
@@ -98,7 +99,11 @@ for d in unique_connect_time_dates[0:1]: # index represents the date number
                     need_opt = True
                     print('\n enter \n')
                     print(hr_of_day,min_of_day)
-                elif ( (d ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Disconnect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Disconnect_time'][j][20:22]))  ):
+                    print(SOCdep[v])
+                    print(SOCdep)
+                    print(char_per[v])
+
+                elif ( (d ==  All_space_data[s]['Disconnect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Disconnect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Disconnect_time'][j][20:22]))  ):
                     SOCdep[v] = 0
                     char_per[v] = 0
                     stn_id[v] = ""
@@ -140,6 +145,7 @@ for d in unique_connect_time_dates[0:1]: # index represents the date number
             for v,s in enumerate(unique_space_id):
                 if(i < TT[v] and TT[v] > 0):
                     SOC_1[v] = SOC_1[v] + ( ( (I_temp[v,i])  )*(1/60))/Cbat[v]
+                    char_per[v] = char_per[v] - 1 # reduce 1 minute every time
 
         min_of_day+=1
         if (min_of_day == 60):
