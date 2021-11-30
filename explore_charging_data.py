@@ -7,6 +7,18 @@ from new_rental_avail_obj import optimization
 import gurobipy as gp
 from gurobipy import GRB
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 with open('acndata_1_week.json') as f:
     data = json.load(f)
 
@@ -80,8 +92,7 @@ print(datetime.now())
 
 for d in unique_connect_time_dates: # index represents the date number
     print('\n')
-    print(d)
-    print('soc1 = ', SOC_1)
+    print(bcolors.WARNING + d + bcolors.ENDC)
     
     day_end = False
 
@@ -119,6 +130,19 @@ for d in unique_connect_time_dates: # index represents the date number
         # optimisation
         if ((sum(SOCdep) > 0) and (need_opt == True) ):
             print('\n opt \n')
+            print('soc1 = ', SOC_1)
+            print('SOCdep = ', SOCdep)
+            print('char_per = ', char_per)
+            for v,s in enumerate(unique_space_id):
+                if(SOC_1[v] >= SOCdep[v]):
+                    SOCdep[v] = 0
+                    SOC_1[v] = 0
+                
+                # if(char_per[v] < 0):
+                #     print(char_per)
+                #     print(bcolors.FAIL + "Deadline exceeded or Vehicle has not left past deadline" + bcolors.ENDC)
+                #     sys.exit()
+
             I, TT, m,I_temp = optimization(len(unique_space_id), SOCdep, char_per, SOC_1, del_t,Cbat)
             #print(I)
             i=0
@@ -128,6 +152,7 @@ for d in unique_connect_time_dates: # index represents the date number
 
         elif ((sum(SOCdep) == 0)):
             sch_exist = False
+            # print('\n sum(SOCdep == 0) \n')
         # if ( (sch_exist == True)  and sum(SOCdep) == 0):
         #     for v in range(0,len(unique_space_id)):
         #         for i in TT[v]:
@@ -145,7 +170,8 @@ for d in unique_connect_time_dates: # index represents the date number
             for v,s in enumerate(unique_space_id):
                 if(i < TT[v] and TT[v] > 0):
                     SOC_1[v] = SOC_1[v] + ( ( (I_temp[v,i])  )*(1/60))/Cbat[v]
-                    char_per[v] = char_per[v] - 1 # reduce 1 minute every time
+                if(char_per[v] > 0):
+                    char_per[v] = char_per[v] - (1/60) # reduce 1 minute (in hours) every time    
 
         min_of_day+=1
         if (min_of_day == 60):
