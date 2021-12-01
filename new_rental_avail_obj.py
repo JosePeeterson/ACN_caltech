@@ -19,7 +19,7 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
     #Ebat = 300
     #SOCdep = [0.8, 0.6, 0.7]
     #SOC_1 = [0.1, 0.2, 0.1]
-    SOC_xtra = 0.01
+    SOC_xtra = 0.001
 
     TT = []
     for v in range(0,Nv):

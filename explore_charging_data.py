@@ -1,11 +1,14 @@
 import sys
 import json
 import time
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import colorbar
 import pandas as pd
 from datetime import datetime
 from new_rental_avail_obj import optimization
 import gurobipy as gp
 from gurobipy import GRB
+import dateutil
 
 class bcolors:
     HEADER = '\033[95m'
@@ -73,6 +76,22 @@ for s in unique_space_id:
 #print(unique_connect_time_dates)
 #print(len(unique_space_id))
 
+def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time):
+
+    viz_connect_time1 = {v:[] for v in range(0,len(unique_space_id))} 
+    viz_disconnect_time1 = {v:[] for v in range(0,len(unique_space_id))} 
+    viz_I_time1 = {v:[] for v in range(0,len(unique_space_id))} 
+
+    for v,s in enumerate(unique_space_id):
+        viz_connect_time1[v] = [dateutil.parser.parse(s) for s in viz_connect_time[v]]
+        viz_disconnect_time1[v] = [dateutil.parser.parse(s) for s in viz_disconnect_time[v]]
+        viz_I_time1[v] = [dateutil.parser.parse(s) for s in viz_I_time[v]]
+    
+    viz_opt_time1 = [dateutil.parser.parse(s) for s in viz_opt_time]
+
+    return viz_connect_time1, viz_disconnect_time1, viz_opt_time1,viz_I_time1
+
+
 
 
 del_t = 6/60 # every 6 minutes, in hours  
@@ -90,7 +109,14 @@ char_per = [0]*len(unique_space_id)
 
 print(datetime.now())
 
-for d in unique_connect_time_dates: # index represents the date number
+# visualization
+viz_connect_time = {v:[] for v in range(0,len(unique_space_id))} 
+viz_disconnect_time = {v:[] for v in range(0,len(unique_space_id))} 
+viz_opt_time = []
+viz_I = {v:[] for v in range(0,len(unique_space_id))} 
+viz_I_time = {v:[] for v in range(0,len(unique_space_id))} 
+
+for d in unique_connect_time_dates[6:7]: # index represents the date number
     print('\n')
     print(bcolors.WARNING + d + bcolors.ENDC)
     
@@ -108,6 +134,10 @@ for d in unique_connect_time_dates: # index represents the date number
                     char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60) 
                     stn_id[v] = s
                     need_opt = True
+
+                    date_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+                    viz_connect_time[v].append(date_time)
+
                     print('\n enter \n')
                     print(hr_of_day,min_of_day)
                     print(SOCdep[v])
@@ -120,6 +150,9 @@ for d in unique_connect_time_dates: # index represents the date number
                     stn_id[v] = ""
                     SOC_1[v] = 0
                     need_opt = True
+
+                    date_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+                    viz_disconnect_time[v].append(date_time)
                     print('\n leave \n')
                     print(hr_of_day,min_of_day)
 
@@ -142,9 +175,12 @@ for d in unique_connect_time_dates: # index represents the date number
                 #     print(char_per)
                 #     print(bcolors.FAIL + "Deadline exceeded or Vehicle has not left past deadline" + bcolors.ENDC)
                 #     sys.exit()
+            opt_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+            viz_opt_time.append(opt_time)
+
 
             I, TT, m,I_temp = optimization(len(unique_space_id), SOCdep, char_per, SOC_1, del_t,Cbat)
-            #print(I)
+            #viz_I.append(str(list(I_temp.items())))
             i=0
             cnt = 0
             sch_exist = True
@@ -170,9 +206,12 @@ for d in unique_connect_time_dates: # index represents the date number
             for v,s in enumerate(unique_space_id):
                 if(i < TT[v] and TT[v] > 0):
                     SOC_1[v] = SOC_1[v] + ( ( (I_temp[v,i])  )*(1/60))/Cbat[v]
+                    viz_I[v].append(I_temp[v,i])
+                    viz_I_time[v].append(d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00" )
+
                 if(char_per[v] > 0):
                     char_per[v] = char_per[v] - (1/60) # reduce 1 minute (in hours) every time    
-
+            
         min_of_day+=1
         if (min_of_day == 60):
             hr_of_day+=1
@@ -182,9 +221,39 @@ for d in unique_connect_time_dates: # index represents the date number
             day_end = True
 
         
-        # print(stn_id)
-        # print(SOCdep)
-        # print(char_per)
+        # Visualize charging requests and schedule
+
+        #if (d == "01 May 2021" or "02 May 2021"):
+            
+
+
+viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time = convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time)
+
+col_con = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo']
+col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx']
+col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+
+print("\n")
+for v,s in enumerate(unique_space_id):
+    print(len(viz_connect_time[v]))
+    print(len(viz_disconnect_time[v]))
+
+    for i in range(0,len(viz_disconnect_time[v])):
+        ax1.plot(viz_connect_time[v][i],v,col_con[v])
+        ax1.plot(viz_disconnect_time[v][i],v,col_disc[v])
+        
+for v,s in enumerate(unique_space_id):
+    for i in range(0,len(viz_I_time[v])):
+        ax2.plot(viz_I_time[v][i],viz_I[v][i],col_I[v])
+
+ax1.set_xlabel('Time / (date-Hr-Min)')
+ax1.set_ylabel('Charging slot number / #', color='g')
+ax2.set_ylabel('Charging current / A', color='b')        
+#plt.plot(viz_opt_time,viz_I)
+plt.show()
 
 print(datetime.now())
 
