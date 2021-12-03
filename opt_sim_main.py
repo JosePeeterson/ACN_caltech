@@ -2,13 +2,14 @@ import sys
 import json
 import time
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import colorbar
+from matplotlib.pyplot import colorbar, xcorr
 import pandas as pd
 from datetime import datetime
-from new_rental_avail_obj import optimization
+#from new_rental_avail_obj import optimization
 import gurobipy as gp
 from gurobipy import GRB
 import dateutil
+from char_cost_obj import cost_optimization
 
 class bcolors:
     HEADER = '\033[95m'
@@ -39,7 +40,7 @@ for j in unique_space_id:
     con_time = []
     discon_time = []
     kw_req = []
-    kw_del = []
+    min_avail = []
     all_time_one_space_data = {}
     for i in range(0, len_events):
         if ( (data['_items'][i]['spaceID'] == j) ):
@@ -47,17 +48,16 @@ for j in unique_space_id:
             discon_time.append(data['_items'][i]['disconnectTime'])
             if ( data['_items'][i]['userInputs'] != None):
                 kw_req.append(data['_items'][i]['userInputs'][0]['kWhRequested'])
-                kw_del.append(data['_items'][i]['userInputs'][0]['minutesAvailable'])
+                min_avail.append(data['_items'][i]['userInputs'][0]['minutesAvailable'])
                 k+=1
 
     all_time_one_space_data['kWhRequested'] = kw_req
     all_time_one_space_data['Connect_time'] = con_time
     all_time_one_space_data['Disconnect_time'] = discon_time
-    all_time_one_space_data['Minutes_available'] = kw_del
+    all_time_one_space_data['Minutes_available'] = min_avail
     All_space_data[j] = all_time_one_space_data
     #print(j)
 
-each_veh_connect_times = []
 unique_connect_time_dates = []
 
 for s in unique_space_id:
@@ -106,9 +106,10 @@ need_opt = False
 stn_id = [""]*len(unique_space_id)
 SOCdep = [0]*len(unique_space_id)
 char_per = [0]*len(unique_space_id)
-
+Nv = len(unique_space_id)
 
 print(datetime.now())
+
 
 # visualization
 viz_connect_time = {v:[] for v in range(0,len(unique_space_id))} 
@@ -116,8 +117,16 @@ viz_disconnect_time = {v:[] for v in range(0,len(unique_space_id))}
 viz_opt_time = []
 viz_I = {v:[] for v in range(0,len(unique_space_id))} 
 viz_I_time = {v:[] for v in range(0,len(unique_space_id))} 
+viz_curr_plot = {}
+viz_price_plot = {}
+viz_time_plot = {}
+viz_TTv = []
+spn = 0 # sub_plot_no 
 
-for d in unique_connect_time_dates[1:7]: # index represents the date number
+start_date = 0
+end_date = 1
+
+for d in unique_connect_time_dates[start_date:end_date]: # index represents the date number
     print('\n')
     print(bcolors.WARNING + d + bcolors.ENDC)
     
@@ -178,9 +187,19 @@ for d in unique_connect_time_dates[1:7]: # index represents the date number
                 #     sys.exit()
             opt_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
             viz_opt_time.append(opt_time)
+            
 
+            #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
+            TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
 
-            TT, I_temp = optimization(len(unique_space_id), SOCdep, char_per, SOC_1, del_t,Cbat)
+            viz_TTv.append(TT)
+            for v in range(0,Nv):
+                for i in range(0,TT[v]):
+                    viz_curr_plot[spn,v,i] = I_temp[v,i]
+                    viz_price_plot[spn,v,i] = viz_WEPV[v][i]
+                    viz_time_plot[spn,v,i] = viz_timev[v][i]
+            spn+=1
+
             #viz_I.append(str(list(I_temp.items())))
             i=0
             cnt = 0
@@ -203,13 +222,14 @@ for d in unique_connect_time_dates[1:7]: # index represents the date number
         if ( sch_exist == True): # delta t is 6 minutes.
             if (cnt == 6):
                 i+=1
-                cnt = 0
+                cnt=0
             cnt+=1
             for v,s in enumerate(unique_space_id):
-                if(i < TT[v] and TT[v] > 0):
+                if( (i < TT[v]) and (TT[v] > 0) ):
                     SOC_1[v] = SOC_1[v] + ( ( (I_temp[v,i])  )*(1/60))/Cbat[v]
                     viz_I[v].append(I_temp[v,i])
-                    viz_I_time[v].append(d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00" )
+                    tim = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00" 
+                    viz_I_time[v].append(tim)
 
                 if(char_per[v] > 0):
                     char_per[v] = char_per[v] - (1/60) # reduce 1 minute (in hours) every time    
@@ -231,30 +251,83 @@ for d in unique_connect_time_dates[1:7]: # index represents the date number
 
 viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time = convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time)
 
+
+
 col_con = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo']
 col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx']
 col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
 
-fig, ax1 = plt.subplots()
-ax2 = ax1.twinx()
+
 
 print("\n")
-for v,s in enumerate(unique_space_id):
-    print(len(viz_connect_time[v]))
-    print(len(viz_disconnect_time[v]))
+# for v,s in enumerate(unique_space_id):
+#     print(len(viz_connect_time[v]))
+#     print(len(viz_disconnect_time[v]))
+#     for i in range(0,len(viz_disconnect_time[v])):
+#         ax1[0].plot(viz_connect_time[v][i],v,col_con[v])
+#         ax1[0].plot(viz_disconnect_time[v][i],v,col_disc[v])
 
-    for i in range(0,len(viz_disconnect_time[v])):
-        ax1.plot(viz_connect_time[v][i],v,col_con[v])
-        ax1.plot(viz_disconnect_time[v][i],v,col_disc[v])
-        
-for v,s in enumerate(unique_space_id):
-    for i in range(0,len(viz_I_time[v])):
-        ax2.plot(viz_I_time[v][i],viz_I[v][i],col_I[v])
 
-ax1.set_xlabel('Time / (date-Hr-Min)')
-ax1.set_ylabel('Charging slot number / #', color='g')
-ax2.set_ylabel('Charging current / A', color='b')        
+# ax2 = ax1.twinx()
+# ax2_2 = ax1_2.twinx()
+# ax2_3 = ax1_3.twinx()   
+z = 0
+for s in range(0,spn):
+    fig,ax1 = plt.subplots(2)
+    for v in range(0,Nv):
+        for i in range(0,viz_TTv[s][v]):
+            ax1[0].plot(viz_time_plot[s,v,i],viz_price_plot[s,v,i],col_con[v])
+            ax1[0].set_xlabel('Time / (date-Hr-Min)')
+            ax1[0].set_ylabel('Charging cost / ($/MWh)', color='b')
+            ax1[1].plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_disc[v])
+            ax1[1].set_xlabel('Time / (date-Hr-Min)')
+            ax1[1].set_ylabel('Charging current / A', color='r') 
+
+
+            # elif(s>= d and s < d + d ):
+            #     ax1_2[s-d].plot(viz_time_plot[s,v,i],viz_price_plot[s,v,i],col_con[v])
+            #     ax2_2[s-d] = ax1_2[s-d].twinx()      
+            #     ax2_2[s-d].plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_disc[v])
+            # else:
+            #     ax1_3[s-(d+d)].plot(viz_time_plot[s,v,i],viz_price_plot[s,v,i],col_con[v])
+            #     ax2_3[s-(d+d)] = ax1_3[s-(d+d)].twinx()      
+            #     ax2_3[s-(d+d)].plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_disc[v])                
+
+            # ax1[s].set_xlabel('Time / (date-Hr-Min)')
+            # ax1[s].set_ylabel('Charging cost / ($/MWh)', color='b')
+            # ax2.set_ylabel('Charging current / A', color='r')       
+# for v,s in enumerate(unique_space_id):
+#     for i in range(0,len(viz_I_time[v])):
+#         #ax2.plot(viz_I_time[v][i],viz_I[v][i],col_I[v])
+#         key = viz_I_time[v][i]
+#         #ax1[1].plot(viz_I_time[v][i], Minute_Elec_price[viz_I_time[v][i]],'bx')
+
+
+# ax1[1].set_xlabel('Time / (date-Hr-Min)')
+# ax1[1].set_ylabel('Charging cost / ($/MWh)', color='b')
+# ax1[0].set_xlabel('Time / (date-Hr-Min)')
+# ax1[0].set_ylabel('Charging slot number / #', color='g')
+# ax2.set_ylabel('Charging current / A', color='b')        
 #plt.plot(viz_opt_time,viz_I)
+
+
+# t = []
+# p = []
+# st_d = unique_connect_time_dates[start_date][0:2]
+# et_d = unique_connect_time_dates[end_date][0:2]
+
+# print(viz_disconnect_time[0][0])
+
+# for k in Minute_Elec_price.keys():
+#     if (  (int(str(k)[8:10]) >= int(st_d)) and (int(str(k)[8:10]) <=  int(et_d)) ):
+        
+#         t.append(k)
+#         p.append(Minute_Elec_price[k])
+
+
+
+
+
 plt.show()
 
 print(datetime.now())
