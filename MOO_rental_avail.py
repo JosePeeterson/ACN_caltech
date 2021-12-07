@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import sys
 
-def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
+def MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
 
     #Nv = 3
     #Tdep = [10,4,8]
@@ -12,8 +12,7 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
     t_s = 0
 
  
-    Imax = 80
-    Icmax = Nv*80
+
 
     #Cbat = 270
     #Ebat = 300
@@ -21,11 +20,7 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
     #SOC_1 = [0.1, 0.2, 0.1]
     SOC_xtra = 0.001
 
-    TT = []
-    for v in range(0,Nv):
-        TT.append( math.ceil((char_per[v] + t_s) / del_t) )
 
-    max_TT = max(TT) 
     #print(TT)
     
     #def weight_function(i,v):
@@ -44,16 +39,8 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
 
 
 
-    m = gp.Model('lin_prog')
 
 
-    m.params.Presolve = 0
-    m.reset(0)
-
-    # Decision variables
-    I = []
-    for v in range(0,Nv):
-        I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
 
     #print(I[1],"\n")
     #print(I[2],"\n")
@@ -102,34 +89,7 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
             m.addConstr( ( sum(each_veh_curr) )* del_t  <= (SOCdep[v] - SOC_1[v] + SOC_xtra )*Cbat[v] )
             print(v,i)
 
-
-    m.setObjective(-1*(sum([a*b for a,b in zip(tot_char_curr,weights)])), GRB.MINIMIZE)
-
-    m.update()
-    m.optimize()
-
-    print('\n')
-
-    I_temp = {}
-
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):
-            I_temp[v,i] = I[v][i].x
-            #I_temp.append([v,i,I[v][i].x])
-
-    print(I_temp)
-    status = m.Status
-    if status in (GRB. INF_OR_UNBD , GRB. INFEASIBLE , GRB. UNBOUNDED ):
-        print("The model cannot be solved because it is infeasible or unbounded ")
-        sys.exit(1)
-    if status != GRB.OPTIMAL:
-        print ("Optimization was stopped with status" + str( status ))
-        sys.exit(1)
-
-
-    return TT, I_temp 
-
-
+    return tot_char_curr, weights
 
 
 

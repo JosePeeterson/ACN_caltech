@@ -7,7 +7,7 @@ import sys
 import datetime
 import dateutil
 
-def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
+def MOO_char_cost_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     
     begin_time = dateutil.parser.parse(begin_time)
 
@@ -57,8 +57,7 @@ def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     t_s = 0
 
 
-    Imax = 80
-    Icmax = Nv*80
+
 
 
     # Cbat = 20
@@ -70,18 +69,14 @@ def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
 
 
 
-    TT = []
-    for v in range(0,Nv):
-        TT.append( math.ceil((char_per[v] + t_s) / del_t) )
 
-    max_TT = max(TT) 
 
     
 
 
     WEPV = []
     viz_WEPV = {v:[] for v in range(0,Nv)}
-    viz_timev = {v:[] for v in range(0,Nv)}
+    viz_timev_cost = {v:[] for v in range(0,Nv)}
     #print(curr_time)
     for v in range(0,Nv):
         curr_time = begin_time
@@ -89,22 +84,14 @@ def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
             #print(curr_time)
             WEPV.append( Minute_Elec_price[curr_time] )
             viz_WEPV[v].append( Minute_Elec_price[curr_time] )
-            viz_timev[v].append( curr_time )
+            viz_timev_cost[v].append( curr_time )
             curr_time = curr_time + datetime.timedelta(minutes=6)
 
 
 
 
 
-    m = gp.Model('lin_prog')
 
-    m.params.Presolve = 0
-    m.reset(0)
-
-    # Decision variables
-    I = []
-    for v in range(0,Nv):
-        I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
 
 
     # upper_bound battery power constraint
@@ -130,12 +117,12 @@ def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
         m.addConstr( sum(slot_pwr) <= Icmax )
 
     # lower_bound Energy constraint
-    tot_char_curr = []
+    #tot_char_curr = []
     for v in range(0,Nv):
         each_veh_curr = []
         for i in range(0,TT[v]):
             each_veh_curr.append(I[v][i])
-            tot_char_curr.append(I[v][i])
+            #tot_char_curr.append(I[v][i])
         if(TT[v] > 0):
             m.addConstr( ( sum(each_veh_curr) )* del_t  >= (SOCdep[v] - SOC_1[v])*Cbat[v] )
 
@@ -151,29 +138,10 @@ def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
 
 
     # Charging cost Objective #1
-    m.setObjective(sum([a*b for a,b in zip(tot_char_curr,WEPV)]), GRB.MINIMIZE)
-
-    m.update()
-    m.optimize()
-
-    print('\n')
-
-    I_temp = {}
-
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):
-            I_temp[v,i] = I[v][i].x
-            #I_temp.append([v,i,I[v][i].x])
-
-    print(I_temp)
-    status = m.Status
-    if status in (GRB. INF_OR_UNBD , GRB. INFEASIBLE , GRB. UNBOUNDED ):
-        print("The model cannot be solved because it is infeasible or unbounded ")
-        sys.exit(1)
-    if status != GRB.OPTIMAL:
-        print ("Optimization was stopped with status" + str( status ))
-        sys.exit(1)
-
-    return TT, I_temp,viz_WEPV, viz_timev
-
+    return WEPV,viz_WEPV, viz_timev_cost 
     
+
+
+
+
+

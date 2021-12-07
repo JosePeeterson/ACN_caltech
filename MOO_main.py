@@ -9,7 +9,10 @@ from datetime import datetime
 import gurobipy as gp
 from gurobipy import GRB
 import dateutil
-from char_cost_obj import cost_optimization
+#from char_cost_obj import cost_optimization
+from New_bat_deg_obj import bat_deg_optimization
+from MOO_optimization import mult_obj_opt
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -120,11 +123,13 @@ viz_I_time = {v:[] for v in range(0,len(unique_space_id))}
 viz_curr_plot = {}
 viz_price_plot = {}
 viz_time_plot = {}
+viz_WEP_plot = {}
+viz_WEP_time_plot = {}
 viz_TTv = []
 spn = 0 # sub_plot_no 
 
 start_date = 0
-end_date = 1
+end_date = 3
 
 for d in unique_connect_time_dates[start_date:end_date]: # index represents the date number
     print('\n')
@@ -140,7 +145,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
                 if( (d ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Connect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Connect_time'][j][20:22])) ):
                     soc_init[v] = 0.1
                     SOC_1[v] = 0.1
-                    SOCdep[v] = (All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) + soc_init[v]
+                    SOCdep[v] = round((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) + soc_init[v],2)
                     char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60) 
                     stn_id[v] = s
                     need_opt = True
@@ -190,14 +195,17 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
             
 
             #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
-            TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost = mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time)
 
             viz_TTv.append(TT)
             for v in range(0,Nv):
                 for i in range(0,TT[v]):
                     viz_curr_plot[spn,v,i] = I_temp[v,i]
-                    viz_price_plot[spn,v,i] = viz_WEPV[v][i]
-                    viz_time_plot[spn,v,i] = viz_timev[v][i]
+                    viz_time_plot[spn,v,i] = viz_timev_bat[v][i]
+                    viz_WEP_plot[spn,v,i] = viz_WEPV[v][i]
+                    viz_WEP_time_plot[spn,v,i] = viz_timev_cost[v][i]
             spn+=1
 
             #viz_I.append(str(list(I_temp.items())))
@@ -205,6 +213,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
             cnt = 0
             sch_exist = True
             need_opt = False
+
 
         elif ((sum(SOCdep) == 0)):
             sch_exist = False
@@ -246,7 +255,8 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
         # Visualize charging requests and schedule
 
         #if (d == "01 May 2021" or "02 May 2021"):
-            
+    if spn > 10:
+        break       
 
 
 viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time = convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time)
@@ -264,24 +274,21 @@ for v,s in enumerate(unique_space_id):
     print(len(viz_connect_time[v]))
     print(len(viz_disconnect_time[v]))
     for i in range(0,len(viz_disconnect_time[v])):
-        plt.plot(viz_connect_time[v][i],v,col_con[v])
-        plt.plot(viz_disconnect_time[v][i],v,col_disc[v])
+        ax2.plot(viz_connect_time[v][i],v,col_con[v])
+        ax2.plot(viz_disconnect_time[v][i],v,col_disc[v])
 
 
-# ax2 = ax1.twinx()
-# ax2_2 = ax1_2.twinx()
-# ax2_3 = ax1_3.twinx()   
-z = 0
+
 for s in range(0,spn):
     fig,ax1 = plt.subplots(2)
     for v in range(0,Nv):
         for i in range(0,viz_TTv[s][v]):
-            ax1[0].plot(viz_time_plot[s,v,i],viz_price_plot[s,v,i],col_con[v])
+            ax1[0].plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_con[v])
             ax1[0].set_xlabel('Time / (date-Hr-Min)')
-            ax1[0].set_ylabel('Charging cost / ($/MWh)', color='b')
-            ax1[1].plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_disc[v])
+            ax1[0].set_ylabel('Charging current / A', color='b')
+            ax1[1].plot(viz_WEP_time_plot[s,v,i],viz_WEP_plot[s,v,i],col_con[v])
             ax1[1].set_xlabel('Time / (date-Hr-Min)')
-            ax1[1].set_ylabel('Charging current / A', color='r') 
+            ax1[1].set_ylabel('Charging cost / ($/Mwh)', color='b')
 
 
             # elif(s>= d and s < d + d ):
