@@ -9,7 +9,7 @@ import sys
 def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
 
     m = gp.Model('moo')
-    #m.params.NonConvex = 2
+    m.params.NonConvex = 2
 
     m.params.Presolve = 0
     m.reset(0)
@@ -28,12 +28,12 @@ def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     # Decision variable declaration
     I = []
     for v in range(0,Nv):
-        I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=Imax) )
 
 
 
     
-    nat_log_array, nat_log_array2, Ah_array,viz_timev_bat  = MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
+    Ah_array,viz_timev_bat, nat_log_array  = MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
 
     tot_char_curr, weights = MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
 
@@ -41,9 +41,12 @@ def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
 
     m.ModelSense = GRB.MINIMIZE
 
-    m.setObjectiveN( -1*(sum([a*b for a,b in zip(tot_char_curr,weights)]))  ,0,weight = 1, reltol=0.1 )
-    m.setObjectiveN(  sum([a*b for a,b in zip(tot_char_curr,WEPV)]) ,1,weight = 100)
-    m.setObjectiveN(  sum( nat_log_array + nat_log_array2 + Ah_array) ,2,weight = 1)
+    # use minimum weight of 10,000 for outright domination to be noticeable
+    m.setObjectiveN(  sum( nat_log_array + Ah_array) ,0,weight = 3)
+    m.setObjectiveN( -1*(sum([a*b for a,b in zip(tot_char_curr,weights)]))  ,2,weight = 1, reltol=0.1 )
+    m.setObjectiveN(  sum([a*b for a,b in zip(tot_char_curr,WEPV)]) ,1,weight = 1)
+    
+    
 
     m.update()
     m.optimize()

@@ -20,7 +20,7 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
     # Cbat = 20
     # SOCdep = [0.8, 0.6, 0.7]
     # SOC_1 = [0.1, 0.2, 0.1]
-    SOC_xtra = 0.01
+    SOC_xtra = 0.001
     soc_min = 0
     soc_max = 1
 
@@ -42,7 +42,8 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
     ks3 = 1.408*(10**-5)
     ks4 = 6.130
 
-    I_lim = 0
+    #I_lim = 1
+    one = 1
 
     # calendric ageing 
 
@@ -122,7 +123,7 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
 
 
 
-
+    '''
     # like boby variable in sample code.
     Ah_iv = []
     for v in range(0,Nv):
@@ -133,67 +134,69 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
         for i in range(0,TT[v]):
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
             m.addConstr(Ah_iv[v][i], GRB.EQUAL, (I[v][i]* del_t)*100 )
-
+    '''
 
 
     Ah_log = []
     for v in range(0,Nv):
-        Ah_log.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        Ah_log.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=2) )
 
     temp_ah = []
     for v in range(0,Nv):
-        temp_ah.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        temp_ah.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS,lb=0, ub=Imax*del_t) )
 
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
-            temp_ah[v][i] == Ah_iv[v][i] + I_lim
+            m.addConstr(temp_ah[v][i], GRB.EQUAL, (I[v][i]*del_t) + one )
+            #m.addConstr(temp_ah[v][i], GRB.EQUAL, (I[v][i]*del_t) + I_lim)
+            #temp_ah[v][i] == Ah_iv[v][i] + I_lim
             #m.addGenConstrLog(temp_ah[v][i], Ah_log[v][i])
-            m.addGenConstrLog(Ah_iv[v][i], Ah_log[v][i])
+            m.addGenConstrLog(temp_ah[v][i], Ah_log[v][i])
 
 
     # like boby variable in smaple code.
     SOC = []
     for v in range(0,Nv):
-        SOC.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        SOC.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=1) )
 
     #constraint update
     for v in range(0,Nv):
         first = 1
         for i in range(0,TT[v]):
-            bat_SOC = m.addVar(soc_min,soc_max)
+            #bat_SOC = m.addVar(soc_min,soc_max)
             if first == 1:
                 m.addConstr(SOC[v][i], GRB.EQUAL, SOC_1[v] + (I[v][i]* del_t) / Cbat[v])
-                m.addConstr(SOC_1[v], GRB.EQUAL, bat_SOC)
+                #m.addConstr(SOC_1[v], GRB.EQUAL, bat_SOC)
                 first = 0
             else:
                 m.addConstr(SOC[v][i], GRB.EQUAL, SOC[v][i-1] + (I[v][i]* del_t) / Cbat[v])
-                m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
+                #m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
 
 
     # like boby variable in smaple code.
     SOC_avg = []
     for v in range(0,Nv):
-        SOC_avg.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        SOC_avg.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=1) )
 
     # SOC constraint update
     for v in range(0,Nv):
         first = 1
         for i in range(0,TT[v]):
-            bat_SOC = m.addVar(soc_min,soc_max)
+            #bat_SOC = m.addVar(soc_min,soc_max)
             if first == 1:
                 m.addConstr(SOC_avg[v][i], GRB.EQUAL, SOC_1[v] + (0.5*(I[v][i]* del_t)) / Cbat[v])
-                m.addConstr(SOC_1[v], GRB.EQUAL, bat_SOC)
+                #m.addConstr(SOC_1[v], GRB.EQUAL, bat_SOC)
                 first = 0
             else:         
                 m.addConstr(SOC_avg[v][i], GRB.EQUAL, SOC[v][i-1] + (0.5*(I[v][i]* del_t)) / Cbat[v])
-                m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
+                #m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
 
 
     # like boby variable in smaple code.
     SOC_dev = []
     for v in range(0,Nv):
-        SOC_dev.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        SOC_dev.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=1) )
 
     # SOC constraint update
     for v in range(0,Nv):
@@ -205,72 +208,75 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
 
     exp1 = []
     for v in range(0,Nv):
-        exp1.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        exp1.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=1) )
 
     temp1 = []
     for v in range(0,Nv):
-        temp1.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        temp1.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=-3, ub=0) )
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-
-            temp1[v][i] == ks2*(SOC_avg[v][i])
+            m.addConstr(temp1[v][i], GRB.EQUAL, ks2*SOC_avg[v][i] )
             m.addGenConstrExp(temp1[v][i], exp1[v][i])
 
 
 
     exp2 = []
     for v in range(0,Nv):
-        exp2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        exp2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=1, ub=1097) )
 
     temp2 = []
     for v in range(0,Nv):
-        temp2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        temp2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=7) )
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-            temp2[v][i] == ks4*(SOC_dev[v][i]) 
+            m.addConstr(temp2[v][i], GRB.EQUAL, ks4*(SOC_dev[v][i]) )
             m.addGenConstrExp(temp2[v][i], exp2[v][i])
 
 
 
-
+    inverter = 12
 
     nat_log = []
     for v in range(0,Nv):
-        nat_log.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+        nat_log.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb = -10, ub = 0) )
+        #nat_log.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb = -100, ub = -3) )
 
     temp3 = []
     for v in range(0,Nv):
-        temp3.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
+        temp3.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb = 0, ub = 0.016) )
+    log_adj = []
+    for v in range(0,Nv):
+        log_adj.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb = -10, ub = 80) )
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-
-            temp3[v][i] == (ks1*(SOC_dev[v][i])*exp1[v][i] + ks3*exp2[v][i])*100
+            #m.addConstr(temp3[v][i], GRB.EQUAL, ks1*(SOC_dev[v][i])*exp1[v][i] + ks3*exp2[v][i] + 0.0004, 'quad'+str((v+1)*i) )
+            m.addConstr(temp3[v][i], GRB.EQUAL, ks1*(SOC_dev[v][i])*exp1[v][i] + ks3*exp2[v][i] + 0.0008, 'quad'+str((v+1)*i) )
             m.addGenConstrLog(temp3[v][i], nat_log[v][i])
+            m.addConstr(log_adj[v][i], GRB.EQUAL, inverter + nat_log[v][i])
 
 
 
 
 
-    nat_log2 = []
-    for v in range(0,Nv):
-        nat_log2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+    # nat_log2 = []
+    # for v in range(0,Nv):
+    #     nat_log2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
 
-    temp4 = []
-    for v in range(0,Nv):
-        temp4.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
+    # temp4 = []
+    # for v in range(0,Nv):
+    #     temp4.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
 
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):
-            #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-
-            temp4[v][i] == ( ( (SOC[v][i]*ka*(math.exp( (-Ea/R)*(1/T - 1/Tref) ) ) + kb*math.exp((-Eb/R )*(1/T - 1/Tref) ) )*5*idle_time + Qnom[v] ) / Qnom[v] )*100 
-            m.addGenConstrLog(temp4[v][i], nat_log2[v][i])
+    # for v in range(0,Nv):
+    #     for i in range(0,TT[v]):
+    #         #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
+    #         m.addConstr(temp4[v][i] , GRB.EQUAL,   (SOC[v][i]*ka*(1000000 ) + kb )*5*idle_time + Qnom[v]  )
+    #         #temp4[v][i] == ( ( (SOC[v][i]*ka*(math.exp( (-Ea/R)*(1/T - 1/Tref) ) ) + kb*math.exp((-Eb/R )*(1/T - 1/Tref) ) )*5*idle_time + Qnom[v] ) / Qnom[v] )*100 
+    #         m.addGenConstrLog(temp4[v][i], nat_log2[v][i])
 
 
 
@@ -282,15 +288,17 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
     # Battery degradation cost Objective #2
 
     Ah_array = []
-    nat_log_array = []
-    nat_log_array2 = []
+    #nat_log_array = []
+    #nat_log_array2 = []
+    log_adj_array = []
 
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             Ah_array.append(Ah_log[v][i])
-            nat_log_array.append(nat_log[v][i])
-            nat_log_array2.append(nat_log2[v][i])
+            #nat_log_array.append(nat_log[v][i])
+            #nat_log_array2.append(nat_log2[v][i])
+            log_adj_array.append(log_adj[v][i])
 
 
-    return nat_log_array, nat_log_array2, Ah_array,viz_timev_bat
+    return Ah_array,viz_timev_bat, log_adj_array

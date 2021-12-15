@@ -26,7 +26,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('acndata_1_week.json') as f:
+with open('ACN_DATA/acndata_1_week.json') as f:
     data = json.load(f)
 
 len_events = len(data['_items'])
@@ -129,7 +129,7 @@ viz_TTv = []
 spn = 0 # sub_plot_no 
 
 start_date = 0
-end_date = 3
+end_date = 1
 
 for d in unique_connect_time_dates[start_date:end_date]: # index represents the date number
     print('\n')
@@ -276,6 +276,8 @@ for v,s in enumerate(unique_space_id):
     for i in range(0,len(viz_disconnect_time[v])):
         ax2.plot(viz_connect_time[v][i],v,col_con[v])
         ax2.plot(viz_disconnect_time[v][i],v,col_disc[v])
+        ax2.set_xlabel('Time / (date-Hr-Min)')
+        ax2.set_ylabel('charging station / (#)')
 
 
 

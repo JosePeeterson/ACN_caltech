@@ -5,7 +5,7 @@ import sys
 import datetime
 import dateutil
 
-def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
+def cal_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
     # WITH taking ln
 
     begin_time = dateutil.parser.parse(begin_time)
@@ -21,7 +21,7 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
     # Cbat = 20
     # SOCdep = [0.8, 0.6, 0.7]
     # SOC_1 = [0.1, 0.2, 0.1]
-    SOC_xtra = 0.01
+    SOC_xtra = 0.001
     soc_min = 0
     soc_max = 1
 
@@ -38,10 +38,6 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
     # ks3 = 1
     # ks4 = 1
     
-    ks1 = -4.092*(10**-4)
-    ks2 = -2.167 
-    ks3 = 1.408*(10**-5)
-    ks4 = 6.130
 
     I_lim = 0
 
@@ -159,7 +155,8 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
-            temp_ah[v][i] == Ah_iv[v][i] + I_lim
+            m.addConstr(temp_ah[v][i], GRB.EQUAL, Ah_iv[v][i] + I_lim)
+            #temp_ah[v][i] == Ah_iv[v][i] + I_lim
             #m.addGenConstrLog(temp_ah[v][i], Ah_log[v][i])
             m.addGenConstrLog(Ah_iv[v][i], Ah_log[v][i])
 
@@ -183,90 +180,6 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
                 m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
 
 
-    # like boby variable in smaple code.
-    SOC_avg = []
-    for v in range(0,Nv):
-        SOC_avg.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    # SOC constraint update
-    for v in range(0,Nv):
-        first = 1
-        for i in range(0,TT[v]):
-            bat_SOC = m.addVar(soc_min,soc_max)
-            if first == 1:
-                m.addConstr(SOC_avg[v][i], GRB.EQUAL, SOC_1[v] + (0.5*(I[v][i]* del_t)) / Cbat[v])
-                m.addConstr(SOC_1[v], GRB.EQUAL, bat_SOC)
-                first = 0
-            else:         
-                m.addConstr(SOC_avg[v][i], GRB.EQUAL, SOC[v][i-1] + (0.5*(I[v][i]* del_t)) / Cbat[v])
-                m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
-
-
-    # like boby variable in smaple code.
-    SOC_dev = []
-    for v in range(0,Nv):
-        SOC_dev.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    # SOC constraint update
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):        
-            #m.addConstr(SOC_dev[v][i], GRB.EQUAL, ((0.75*I[v][i]*I[v][i]*del_t)/ Cbat**2) - ((0.5*I[v][i]*I[v][i]*(del_t**2))/ Cbat**2)   )
-            m.addConstr(SOC_dev[v][i], GRB.EQUAL, (0.5*I[v][i]* del_t)/Cbat[v] )
-
-
-
-    exp1 = []
-    for v in range(0,Nv):
-        exp1.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    temp1 = []
-    for v in range(0,Nv):
-        temp1.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):
-            #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-
-            temp1[v][i] == ks2*(SOC_avg[v][i])
-            m.addGenConstrExp(temp1[v][i], exp1[v][i])
-
-
-
-    exp2 = []
-    for v in range(0,Nv):
-        exp2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    temp2 = []
-    for v in range(0,Nv):
-        temp2.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):
-            #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-            temp2[v][i] == ks4*(SOC_dev[v][i]) 
-            m.addGenConstrExp(temp2[v][i], exp2[v][i])
-
-
-
-
-
-    nat_log = []
-    for v in range(0,Nv):
-        nat_log.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    temp3 = []
-    for v in range(0,Nv):
-        temp3.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS) )
-
-    for v in range(0,Nv):
-        for i in range(0,TT[v]):
-            #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
-
-            temp3[v][i] == (ks1*(SOC_dev[v][i])*exp1[v][i] + ks3*exp2[v][i])*100
-            m.addGenConstrLog(temp3[v][i], nat_log[v][i])
-
-
-
 
 
     nat_log2 = []
@@ -281,7 +194,10 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
         for i in range(0,TT[v]):
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
 
-            temp4[v][i] == ( ( (SOC[v][i]*ka*(math.exp( (-Ea/R)*(1/T - 1/Tref) ) ) + kb*math.exp((-Eb/R )*(1/T - 1/Tref) ) )*5*idle_time + Qnom[v] ) / Qnom[v] )*10 
+            #temp4[v][i] == ( ( (SOC[v][i]*ka*(math.exp( (-Ea/R)*(1/T - 1/Tref) ) ) + kb*math.exp((-Eb/R )*(1/T - 1/Tref) ) )*5*idle_time + Qnom[v] ) / Qnom[v] )*1 
+            m.addConstr(temp4[v][i] , GRB.EQUAL,   (SOC[v][i]*ka*(1000000 ) + kb )*5*idle_time + Qnom[v]  )
+            #m.addConstr(temp4[v][i] , GRB.EQUAL,   (SOC[v][i]*ka*(100000 ) + kb )*5*idle_time + Qnom[v]  )
+            #temp4[v][i] == 100#( ( (SOC[v][i]*ka*(100000 )  + kb*1 )*5*idle_time  + Qnom[v] ) / Qnom[v] )
             m.addGenConstrLog(temp4[v][i], nat_log2[v][i])
 
 
@@ -294,18 +210,16 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
     # Battery degradation cost Objective #2
 
     Ah_array = []
-    nat_log_array = []
     nat_log_array2 = []
 
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             Ah_array.append(Ah_log[v][i])
-            nat_log_array.append(nat_log[v][i])
             nat_log_array2.append(nat_log2[v][i])
 
-    #+   nat_log_array nat_log_array2  +
-    m.setObjective( sum(  nat_log_array2 ), GRB.MINIMIZE)
+    #+   nat_log_array nat_log_array2  +Ah_array
+    m.setObjective( sum(nat_log_array2 + Ah_array), GRB.MINIMIZE)
     #m.setObjective( sum(B_array + Ah_array + Crate_array + b1_array + SOC_array + d_array + a1_a2_array), GRB.MINIMIZE)
 
     m.update()
@@ -320,6 +234,7 @@ def bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             I_temp[v,i] = I[v][i].x
+            print(temp4[v][i].x)
             #I_temp.append([v,i,I[v][i].x])
 
     

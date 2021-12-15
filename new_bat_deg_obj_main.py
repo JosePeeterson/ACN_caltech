@@ -11,7 +11,8 @@ from gurobipy import GRB
 import dateutil
 #from char_cost_obj import cost_optimization
 from New_bat_deg_obj import bat_deg_optimization
-
+from cal_deg_obj import cal_bat_deg_optimization
+from cyc_deg_obj import cyc_bat_deg_optimization
 
 class bcolors:
     HEADER = '\033[95m'
@@ -25,7 +26,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('acndata_1_week.json') as f:
+with open('ACN_DATA/acndata_1_week.json') as f:
     data = json.load(f)
 
 len_events = len(data['_items'])
@@ -193,7 +194,9 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
 
             #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
             #TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
-            TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev = cal_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            TT, I_temp,viz_timev = cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
 
             viz_TTv.append(TT)
             for v in range(0,Nv):
@@ -207,7 +210,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
             cnt = 0
             sch_exist = True
             need_opt = False
-
+            break
         elif ((sum(SOCdep) == 0)):
             sch_exist = False
             # print('\n sum(SOCdep == 0) \n')
@@ -260,14 +263,14 @@ col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx
 col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
 
 
-# fig,ax2 = plt.subplots()
-# print("\n")
-# for v,s in enumerate(unique_space_id):
-#     print(len(viz_connect_time[v]))
-#     print(len(viz_disconnect_time[v]))
-#     for i in range(0,len(viz_disconnect_time[v])):
-#         ax2.plot(viz_connect_time[v][i],v,col_con[v])
-#         ax2.plot(viz_disconnect_time[v][i],v,col_disc[v])
+fig,ax2 = plt.subplots()
+print("\n")
+for v,s in enumerate(unique_space_id):
+    #print(len(viz_connect_time[v]))
+    #print(len(viz_disconnect_time[v]))
+    for i in range(0,len(viz_disconnect_time[v])):
+        ax2.plot(viz_connect_time[v][i],v,col_con[v])
+        ax2.plot(viz_disconnect_time[v][i],v,col_disc[v])
 
 
 
