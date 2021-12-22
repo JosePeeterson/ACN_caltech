@@ -97,7 +97,7 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 del_t = 6/60 # every 6 minutes, in hours  
 hr_of_day = 00
 min_of_day = 00
-Vbat = 410
+vbat = 410
 soc_init = SOC_1 = [0]*len(unique_space_id)
 Cbat = [270]*len(unique_space_id)
 sch_exist = False
@@ -140,7 +140,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
                 if( (d ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Connect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Connect_time'][j][20:22])) ):
                     soc_init[v] = 0.1
                     SOC_1[v] = 0.1
-                    SOCdep[v] = (All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) + soc_init[v]
+                    SOCdep[v] = (All_space_data[s]['kWhRequested'][j]*1000) / (vbat*Cbat[v]) + soc_init[v]
                     char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60) 
                     stn_id[v] = s
                     need_opt = True
@@ -190,7 +190,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
             
 
             #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
-            TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time,vbat)
 
             viz_TTv.append(TT)
             for v in range(0,Nv):

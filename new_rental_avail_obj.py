@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import sys
 
-def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
+def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,vbat):
 
     #Nv = 3
     #Tdep = [10,4,8]
@@ -103,7 +103,11 @@ def optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
             print(v,i)
 
 
-    m.setObjective(-1*(sum([a*b for a,b in zip(tot_char_curr,weights)])), GRB.MINIMIZE)
+    max_current = 100
+    max_avail_val = max_current*Nv
+
+
+    m.setObjective(-1*(1/max_avail_val)*(sum([a*b for a,b in zip(tot_char_curr,weights)])), GRB.MINIMIZE)
 
     m.update()
     m.optimize()

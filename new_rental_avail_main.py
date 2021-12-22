@@ -180,7 +180,7 @@ for d in unique_connect_time_dates[1:7]: # index represents the date number
             viz_opt_time.append(opt_time)
 
 
-            TT, I_temp = optimization(len(unique_space_id), SOCdep, char_per, SOC_1, del_t,Cbat)
+            TT, I_temp = optimization(len(unique_space_id), SOCdep, char_per, SOC_1, del_t,Cbat,Vbat)
             #viz_I.append(str(list(I_temp.items())))
             i=0
             cnt = 0

@@ -7,7 +7,7 @@ import sys
 import datetime
 import dateutil
 
-def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
+def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
     
     begin_time = dateutil.parser.parse(begin_time)
 
@@ -147,11 +147,13 @@ def cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
         if(TT[v] > 0):
             m.addConstr( ( sum(each_veh_curr) )* del_t  <= (SOCdep[v] - SOC_1[v] + SOC_xtra)*Cbat[v]  )
 
-
+    max_timeslot = 307
+    max_current = 100
+    max_char_cost = 98.37*max_timeslot*Nv*vbat*max_current*del_t
 
 
     # Charging cost Objective #1
-    m.setObjective(sum([a*b for a,b in zip(tot_char_curr,WEPV)]), GRB.MINIMIZE)
+    m.setObjective((1/max_char_cost)*sum([a*b for a,b in zip(tot_char_curr,WEPV)]), GRB.MINIMIZE)
 
     m.update()
     m.optimize()
