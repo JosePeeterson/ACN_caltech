@@ -13,6 +13,12 @@ import dateutil
 from New_bat_deg_obj import bat_deg_optimization
 from cal_deg_obj import cal_bat_deg_optimization
 from cyc_deg_obj import cyc_bat_deg_optimization
+from apprx_cyc_bat_deg_obj import apprx_cyc_bat_deg_optimization
+from apprx_cal_bat_deg_obj import apprx_cal_bat_deg_optimization
+import numpy as np
+from apprx_total_bat_deg_obj import apprx_tot_bat_deg_optimization
+from apprx_curr_bat_deg import apprx_curr_bat_deg_optimization
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -26,7 +32,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('ACN_DATA/acndata_1_week.json') as f:
+with open('ACN_DATA/acndata_6_months.json') as f:
     data = json.load(f)
 
 len_events = len(data['_items'])
@@ -123,13 +129,17 @@ viz_I_time = {v:[] for v in range(0,len(unique_space_id))}
 viz_curr_plot = {}
 viz_price_plot = {}
 viz_time_plot = {}
+num_v = []
 viz_TTv = []
+all_objvals = []
 spn = 0 # sub_plot_no 
+Largest_TTv = []
+
 
 start_date = 0
-end_date = 1
+end_date = 7
 
-for d in unique_connect_time_dates[start_date:end_date]: # index represents the date number
+for d in unique_connect_time_dates: # [start_date:end_date] index represents the date number
     print('\n')
     print(bcolors.WARNING + d + bcolors.ENDC)
     
@@ -191,13 +201,21 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
             opt_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
             viz_opt_time.append(opt_time)
             
-
+            #num_v.append(sum(SOC_1>[0]*len(SOC_1)))
+            num_v.append(np.sum(np.array(SOC_1) > 0))
             #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
             #TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
             #TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
             #TT, I_temp,viz_timev = cal_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
-            TT, I_temp,viz_timev = cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev = cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev = apprx_cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev = apprx_cal_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            TT, I_temp,viz_timev,objval = apprx_tot_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            #TT, I_temp,viz_timev,objval = apprx_curr_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
+            all_objvals.append(objval)
 
+
+            Largest_TTv.append(sum(TT))
             viz_TTv.append(TT)
             for v in range(0,Nv):
                 for i in range(0,TT[v]):
@@ -251,14 +269,14 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
         # Visualize charging requests and schedule
 
         #if (d == "01 May 2021" or "02 May 2021"):
-            
+print("largest TTv = ", max(Largest_TTv) )            
 
 
 viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time = convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time)
 
 
-
-col_con = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo']
+col_con1 = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo']
+col_con = ['b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-']
 col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx']
 col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
 
@@ -269,19 +287,27 @@ for v,s in enumerate(unique_space_id):
     #print(len(viz_connect_time[v]))
     #print(len(viz_disconnect_time[v]))
     for i in range(0,len(viz_disconnect_time[v])):
-        ax2.plot(viz_connect_time[v][i],v,col_con[v])
+        ax2.plot(viz_connect_time[v][i],v,col_con1[v])
         ax2.plot(viz_disconnect_time[v][i],v,col_disc[v])
 
+fig,ax3 = plt.subplots()        
+plt.plot(num_v)
 
+fig,ax4 = plt.subplots()
+plt.plot(all_objvals)
+plt.title('obj value Vs. opt number')  
 
 for s in range(0,spn):
     fig,ax1 = plt.subplots()
     for v in range(0,Nv):
+        x = []
+        y = []
         for i in range(0,viz_TTv[s][v]):
-            ax1.plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_con[v])
+            x.append(viz_time_plot[s,v,i])
+            y.append(viz_curr_plot[s,v,i])
             ax1.set_xlabel('Time / (date-Hr-Min)')
             ax1.set_ylabel('Charging current / A', color='b')
-
+        plt.plot(x,y,col_con[v])
 
 
             # elif(s>= d and s < d + d ):
@@ -326,6 +352,7 @@ for s in range(0,spn):
 
 
 
+print("\n\n\n\n")
 
 
 plt.show()
