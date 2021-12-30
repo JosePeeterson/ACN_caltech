@@ -1,4 +1,4 @@
-from MOO_bat_deg import MOO_bat_deg_obj
+from MOO_apprx_bat_deg import MOO_bat_deg_obj
 from MOO_rental_avail import MOO_rental_avail_obj
 from MOO_char_cost import MOO_char_cost_obj
 import gurobipy as gp
@@ -6,7 +6,7 @@ from gurobipy import GRB
 import math
 import sys
 
-def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
+def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
 
     m = gp.Model('moo')
     m.params.NonConvex = 2
@@ -30,10 +30,14 @@ def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     for v in range(0,Nv):
         I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=Imax) )
 
+    max_timeslot = 307
+    max_current = 100
 
-
+    max_avail_val = max_current*Nv
+    max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_timeslot
+    max_char_cost = 98.37*max_timeslot*Nv*vbat*max_current*del_t
     
-    Ah_array,viz_timev_bat, nat_log_array  = MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
+    cap_loss_array,viz_timev_bat  = MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
 
     tot_char_curr, weights = MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
 
@@ -42,14 +46,20 @@ def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     m.ModelSense = GRB.MINIMIZE
 
     # use minimum weight of 10,000 for outright domination to be noticeable
-    m.setObjectiveN(  sum( nat_log_array + Ah_array) ,0,weight = 3)
-    m.setObjectiveN( -1*(sum([a*b for a,b in zip(tot_char_curr,weights)]))  ,2,weight = 1, reltol=0.1 )
-    m.setObjectiveN(  sum([a*b for a,b in zip(tot_char_curr,WEPV)]) ,1,weight = 1)
+    m.setObjectiveN(  (1/max_bat_deg)*sum( cap_loss_array) ,0,weight = 1)
+    m.setObjectiveN( -1*(1/max_avail_val)*(sum([a*b for a,b in zip(tot_char_curr,weights)]) )  ,1,weight = 1, reltol=0.1 )
+    m.setObjectiveN(  (1/max_char_cost)*sum([a*b*vbat for a,b in zip(tot_char_curr,WEPV)]) ,2,weight = 1)
     
-    
-
     m.update()
+
     m.optimize()
+
+    obj1 = m.getObjective(0)
+    ob1 = obj1.getValue()
+    obj2 = m.getObjective(1)
+    ob2 = obj2.getValue()
+    obj3 = m.getObjective(2)
+    ob3 = obj3.getValue()
 
     print('\n')
 
@@ -71,7 +81,7 @@ def mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
 
 
 
-    return TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost
+    return TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, ob1, ob2, ob3,max_TT
 
 
 

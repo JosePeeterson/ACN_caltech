@@ -14,7 +14,7 @@ def apprx_tot_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin
 
     t_s = 0
 
-    Imax = 100
+    Imax = 120
     Icmax = Nv*Imax
 
 
@@ -160,17 +160,18 @@ def apprx_tot_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin
 
     max_time_slot = 466
     #####   Paramters of cyclic degradation     #####
-    max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_time_slot # all 3 
+    max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_time_slot # cyc + cal included
     p00 =   1.038*10**-5
     p10 =  -2.003*10**-5
     p01 =   1.281*10**-6
     p11 =   9.554*10**-7
     p02 =  -1.124*10**-9
+    div_fac = 2.2
 
     #####   Paramters of calendric degradation     #####
     p1 =   5.387*10**-5
     p2 =   2.143*10**-5
-    adj_var = 1 # adjustment variable to push the charging to later
+    adj_var = 3 # adjustment variable to push the charging to later
 
     #####   Paramters of degradation due to current    #####
     q1 =  -0.0001528
@@ -187,7 +188,7 @@ def apprx_tot_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             #bat_SOC = m.addVar(soc_min,soc_max)
-            m.addConstr(cap_loss[v][i], GRB.EQUAL, (p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg[v][i]*(I[v][i]) + p02*(I[v][i])**2 + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3 ) )
+            m.addConstr(cap_loss[v][i], GRB.EQUAL, ( (p00 + p10*SOC_avg[v][i] + p01*(I[v][i]+20) + p11*SOC_avg[v][i]*(I[v][i]+20) + p02*(I[v][i]+20)**2)/div_fac + p1*SOC_avg[v][i]*adj_var + p2   ) ) #+ q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3
             #cap_loss = p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg*(I[v][i]) + p02*(I[v][i])**2
 
 

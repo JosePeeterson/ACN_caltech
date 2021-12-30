@@ -4,15 +4,16 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import colorbar, xcorr
 import pandas as pd
+# import datetime
+# from datetime import datetime as dt
 from datetime import datetime
 #from new_rental_avail_obj import optimization
 import gurobipy as gp
 from gurobipy import GRB
 import dateutil
 #from char_cost_obj import cost_optimization
-from New_bat_deg_obj import bat_deg_optimization
 from MOO_optimization import mult_obj_opt
-
+import numpy as np
 
 class bcolors:
     HEADER = '\033[95m'
@@ -46,13 +47,12 @@ for j in unique_space_id:
     min_avail = []
     all_time_one_space_data = {}
     for i in range(0, len_events):
-        if ( (data['_items'][i]['spaceID'] == j) ):
+        if ( (data['_items'][i]['spaceID'] == j) and ( data['_items'][i]['userInputs'] != None) ):
             con_time.append(data['_items'][i]['connectionTime'])
             discon_time.append(data['_items'][i]['disconnectTime'])
-            if ( data['_items'][i]['userInputs'] != None):
-                kw_req.append(data['_items'][i]['userInputs'][0]['kWhRequested'])
-                min_avail.append(data['_items'][i]['userInputs'][0]['minutesAvailable'])
-                k+=1
+            kw_req.append(data['_items'][i]['userInputs'][0]['kWhRequested'])
+            min_avail.append(data['_items'][i]['userInputs'][0]['minutesAvailable'])
+            k+=1
 
     all_time_one_space_data['kWhRequested'] = kw_req
     all_time_one_space_data['Connect_time'] = con_time
@@ -72,8 +72,12 @@ for s in unique_space_id:
     # print('\n')
     for d in All_space_data[s]['Connect_time']:
         date = d[5:16]
-        if (date not in unique_connect_time_dates):
-            unique_connect_time_dates.append(date)
+        fmt_str = '%d %b %Y'
+        date_obj = datetime.strptime(date,fmt_str)
+        if (date_obj not in unique_connect_time_dates):
+            unique_connect_time_dates.append(date_obj)
+    #print(All_space_data[s]['Connect_time'])
+unique_connect_time_dates.sort()
     #print(All_space_data[s]['Connect_time'])
 
 #print(unique_connect_time_dates)
@@ -100,9 +104,9 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 del_t = 6/60 # every 6 minutes, in hours  
 hr_of_day = 00
 min_of_day = 00
-Vbat = 410
-soc_init = SOC_1 = [0]*len(unique_space_id)
-Cbat = [270]*len(unique_space_id)
+Vbat = 410 #blueSG=234 prev. 410v
+soc_init = SOC_1 = [0]*len(unique_space_id) # 0 indicates No are at charging station
+Cbat = [570]*len(unique_space_id)
 sch_exist = False
 need_opt = False
 
@@ -126,14 +130,24 @@ viz_time_plot = {}
 viz_WEP_plot = {}
 viz_WEP_time_plot = {}
 viz_TTv = []
+viz_MaxTT = []
+viz_obj1 = []
+viz_obj2 = []
+viz_obj3 = []
+viz_objSUM = []
+num_v = []
+
+
 spn = 0 # sub_plot_no 
+Largest_TTv = []
 
 start_date = 0
 end_date = 1
 
-for d in unique_connect_time_dates[start_date:end_date]: # index represents the date number
+for d in unique_connect_time_dates[start_date:end_date]: # [start_date:end_date] index represents the date number
+    date_str = d.strftime('%d') + ' ' + d.strftime('%b') + ' ' + d.strftime('%Y') 
     print('\n')
-    print(bcolors.WARNING + d + bcolors.ENDC)
+    print(bcolors.WARNING + date_str + bcolors.ENDC)
     
     day_end = False
 
@@ -142,31 +156,33 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
         for v,s in enumerate(unique_space_id):
             for j in range(0,len(All_space_data[s]['Connect_time'])):
                 
-                if( (d ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Connect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Connect_time'][j][20:22])) ):
+                if( (date_str ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Connect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Connect_time'][j][20:22])) ):
                     soc_init[v] = 0.1
                     SOC_1[v] = 0.1
-                    SOCdep[v] = round((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) + soc_init[v],2)
+                    SOCdep[v] = round( ((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) ) + soc_init[v],2)
                     char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60) 
                     stn_id[v] = s
                     need_opt = True
 
-                    date_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+                    date_time = d.strftime('%Y') + "-" + "05" + "-" + d.strftime('%d') + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
                     viz_connect_time[v].append(date_time)
 
                     print('\n enter \n')
                     print(hr_of_day,min_of_day)
+                    print('\n')
                     print(SOCdep[v])
                     print(SOCdep)
+                    print(soc_init)
                     print(char_per[v])
 
-                elif ( (d ==  All_space_data[s]['Disconnect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Disconnect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Disconnect_time'][j][20:22]))  ):
+                elif ( (date_str ==  All_space_data[s]['Disconnect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Disconnect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Disconnect_time'][j][20:22]))  ):
                     SOCdep[v] = 0
                     char_per[v] = 0
                     stn_id[v] = ""
                     SOC_1[v] = 0
                     need_opt = True
 
-                    date_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+                    date_time = d.strftime('%Y') + "-" + "05" + "-" + d.strftime('%d') + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
                     viz_disconnect_time[v].append(date_time)
                     print('\n leave \n')
                     print(hr_of_day,min_of_day)
@@ -190,16 +206,23 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
                 #     print(char_per)
                 #     print(bcolors.FAIL + "Deadline exceeded or Vehicle has not left past deadline" + bcolors.ENDC)
                 #     sys.exit()
-            opt_time = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+            opt_time =  d.strftime('%Y') + "-" + "05" + "-" + d.strftime('%d') + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00"
+            #format_str = '%Y-%m-%d %H:%M:%S' # The format
+            #datetime_obj = datetime.datetime.strptime(opt_time, format_str)
             viz_opt_time.append(opt_time)
-            
+            num_v.append(np.sum(np.array(SOC_1) > 0))
 
             #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
             #TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
             #TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
-            TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost = mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time)
-
+            TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, obj1, obj2, obj3,max_TT = mult_obj_opt(Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time,Vbat)
+            viz_MaxTT.append(max_TT)
+            Largest_TTv.append(sum(TT))
             viz_TTv.append(TT)
+            viz_obj1.append(obj1)
+            viz_obj2.append(obj2)
+            viz_obj3.append(obj3)
+            viz_objSUM.append(obj1 + obj2 + obj3)
             for v in range(0,Nv):
                 for i in range(0,TT[v]):
                     viz_curr_plot[spn,v,i] = I_temp[v,i]
@@ -213,7 +236,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
             cnt = 0
             sch_exist = True
             need_opt = False
-
+            #break
 
         elif ((sum(SOCdep) == 0)):
             sch_exist = False
@@ -237,7 +260,7 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
                 if( (i < TT[v]) and (TT[v] > 0) ):
                     SOC_1[v] = SOC_1[v] + ( ( (I_temp[v,i])  )*(1/60))/Cbat[v]
                     viz_I[v].append(I_temp[v,i])
-                    tim = d[7:11] + "-" + "05" + "-" + d[0:2] + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00" 
+                    tim =  d.strftime('%Y') + "-" + "05" + "-" +  d.strftime('%d') + " " + str(hr_of_day) + ":" + str(min_of_day) + ":00" 
                     viz_I_time[v].append(tim)
 
                 if(char_per[v] > 0):
@@ -255,17 +278,33 @@ for d in unique_connect_time_dates[start_date:end_date]: # index represents the 
         # Visualize charging requests and schedule
 
         #if (d == "01 May 2021" or "02 May 2021"):
-    if spn > 10:
-        break       
-
+    # if spn > 10:
+    #     break       
+print("largest TTv = ", max(Largest_TTv) )
 
 viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time = convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time)
 
 
-
-col_con = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo']
-col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx']
+col_con1 = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo']
+col_con = ['b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-']
+col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx','bx','gx','rx','cx','mx','yx','kx','wx']
 col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
+
+
+fig,ax3 = plt.subplots()
+ax3.set_title('Objective function value    Vs.   optimization time')
+ax3.plot(viz_opt_time,viz_obj1,'r-')
+ax3.plot(viz_opt_time,viz_obj2,'g-')
+ax3.plot(viz_opt_time,viz_obj3,'b-')
+ax3.plot(viz_opt_time,viz_objSUM,'m-')
+
+print('\n')
+stack = [viz_obj1,viz_obj2,viz_obj3]
+y = np.vstack(stack)
+fig, ax4 = plt.subplots()
+ax4.stackplot(viz_opt_time, y)
+
+
 
 
 fig,ax2 = plt.subplots()
@@ -273,24 +312,60 @@ print("\n")
 for v,s in enumerate(unique_space_id):
     print(len(viz_connect_time[v]))
     print(len(viz_disconnect_time[v]))
-    for i in range(0,len(viz_disconnect_time[v])):
-        ax2.plot(viz_connect_time[v][i],v,col_con[v])
-        ax2.plot(viz_disconnect_time[v][i],v,col_disc[v])
-        ax2.set_xlabel('Time / (date-Hr-Min)')
-        ax2.set_ylabel('charging station / (#)')
+    #stop = min([len(viz_disconnect_time[v]),len(viz_connect_time[v])])
+    for l in viz_connect_time[v]:
+        ax2.plot(l,v,col_con1[v])
+
+    for k in viz_disconnect_time[v]:
+        ax2.plot(k,v,col_disc[v])
+ax2.set_xlabel('Time / (date-Hr-Min)')
+ax2.set_ylabel('charging station / (#)')
 
 
 
 for s in range(0,spn):
     fig,ax1 = plt.subplots(2)
+    viz_tot_curr = np.array([0]*viz_MaxTT[s])
+    viz_stack_y = []
+
     for v in range(0,Nv):
+        x = []
+        y = []
+        x1 = []
+        y1 = []
+
         for i in range(0,viz_TTv[s][v]):
-            ax1[0].plot(viz_time_plot[s,v,i],viz_curr_plot[s,v,i],col_con[v])
-            ax1[0].set_xlabel('Time / (date-Hr-Min)')
-            ax1[0].set_ylabel('Charging current / A', color='b')
-            ax1[1].plot(viz_WEP_time_plot[s,v,i],viz_WEP_plot[s,v,i],col_con[v])
-            ax1[1].set_xlabel('Time / (date-Hr-Min)')
-            ax1[1].set_ylabel('Charging cost / ($/Mwh)', color='b')
+            x.append(viz_time_plot[s,v,i])
+            y.append(viz_curr_plot[s,v,i])
+            x1.append(viz_WEP_time_plot[s,v,i])
+            y1.append(viz_WEP_plot[s,v,i])
+
+        y_temp = np.pad(y,(0,viz_MaxTT[s] - viz_TTv[s][v]),mode='constant')
+        x_temp = np.pad(x,(0,viz_MaxTT[s] - viz_TTv[s][v]),mode='constant')
+
+        viz_tot_curr = viz_tot_curr + y_temp
+        if viz_TTv[s][v] == viz_MaxTT[s]:
+            viz_x_tot_cur =x
+            
+        viz_stack_y.append(y_temp)
+
+        ax1[0].plot(x,y,col_con1[v])
+        ax1[0].set_xlabel('Time / (date-Hr-Min)')
+        ax1[0].set_ylabel('Charging current / A', color='b')
+
+        ax1[1].plot(x1,y1,col_con1[v])
+        ax1[1].set_xlabel('Time / (date-Hr-Min)')
+        ax1[1].set_ylabel('Charging cost / ($/Mwh)', color='b')
+
+    plt.figure()
+    plt.plot(viz_x_tot_cur,viz_tot_curr,'k-')
+
+    print('\n')
+    print(len(viz_stack_y))
+    y = np.vstack(viz_stack_y)
+    fig, ax = plt.subplots()
+    ax.stackplot(viz_x_tot_cur, y)
+
 
 
             # elif(s>= d and s < d + d ):

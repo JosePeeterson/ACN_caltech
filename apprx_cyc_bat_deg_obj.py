@@ -180,7 +180,9 @@ def apprx_cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             #bat_SOC = m.addVar(soc_min,soc_max)
-            m.addConstr(cap_loss[v][i], GRB.EQUAL, p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg[v][i]*(I[v][i]) + p02*(I[v][i])**2 ) #+ p1*SOC_avg[v][i]*adj_var + p2
+            #m.addConstr(cap_loss[v][i], GRB.EQUAL, p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg[v][i]*(I[v][i]) + p02*(I[v][i])**2 ) #+ p1*SOC_avg[v][i]*adj_var + p2
+            m.addConstr(cap_loss[v][i], GRB.EQUAL, (p00 + p10*SOC_avg[v][i] + p01*(I[v][i]+20) + p11*SOC_avg[v][i]*(I[v][i]+20) + p02*(I[v][i]+20)**2)/2.2 )
+            
             #cap_loss = p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg*(I[v][i]) + p02*(I[v][i])**2
 
 
@@ -199,6 +201,7 @@ def apprx_cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin
 
     m.update()
     m.optimize()
+    objval = m.ObjVal
 
     m.write('apprx_bat_deg.lp')
     #m.printQuality()
@@ -222,6 +225,6 @@ def apprx_cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin
 
     print(I_temp)
 
-    return TT, I_temp, viz_timev 
+    return TT, I_temp, viz_timev,objval 
 
 

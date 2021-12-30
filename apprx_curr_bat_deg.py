@@ -104,8 +104,8 @@ def apprx_curr_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begi
 
 
     p1 =  -4.618e-05
-    p2 =   0.0001597
-    p3 =   2.621e-05
+    p2 =   +0.0001597
+    p3 =   +2.621e-05
 
     # #####   Paramters of caledric degradation     ##### 
     # p1 =   5.387*10**-5

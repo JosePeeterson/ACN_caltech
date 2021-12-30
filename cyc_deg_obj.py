@@ -148,7 +148,8 @@ def cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             m.addConstr(temp_ah[v][i], GRB.EQUAL, (I[v][i]*del_t) + one )
-            m.addGenConstrLog(temp_ah[v][i], Ah_log[v][i])
+            m.addGenConstrLog(temp_ah[v][i], Ah_log[v][i] )
+            #m.addGenConstrLog(temp_ah[v][i], Ah_log[v][i], options="FuncPieces=1 FuncPieceLength=0.5")
 
             #m.addGenConstrLogA(temp_ah[v][i], Ah_log[v][i], 2.0, "log2", "FuncPieces=-1 FuncPieceError=1e-2")
 
@@ -220,6 +221,7 @@ def cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
             m.addConstr(temp1[v][i], GRB.EQUAL, ks2*SOC_avg[v][i] )
             m.addGenConstrExp(temp1[v][i], exp1[v][i])
+            #m.addGenConstrExp(temp1[v][i], exp1[v][i], options="FuncPieces=1 FuncPieceLength=0.5")
 
 
 
@@ -236,6 +238,7 @@ def cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
             m.addConstr(temp2[v][i], GRB.EQUAL, ks4*(SOC_dev[v][i]) )
             m.addGenConstrExp(temp2[v][i], exp2[v][i])
+            #m.addGenConstrExp(temp2[v][i], exp2[v][i], options="FuncPieces=1 FuncPieceLength=1")
 
 
 
@@ -260,6 +263,7 @@ def cyc_bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
             #bat_vbat = m.addVar(vbat_min,vbat_max,name="bat_SOC")
             m.addConstr(temp3[v][i], GRB.EQUAL, ks1*(SOC_dev[v][i])*exp1[v][i] + ks3*exp2[v][i] + 0.0008, 'quad'+str((v+1)*i) )
             m.addGenConstrLog(temp3[v][i], nat_log[v][i])
+            #m.addGenConstrLog(temp3[v][i], nat_log[v][i], options="FuncPieces=1 FuncPieceLength=0.005")
             m.addConstr(log_adj[v][i], GRB.EQUAL, inverter + nat_log[v][i])
 
 
