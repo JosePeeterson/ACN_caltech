@@ -1,6 +1,4 @@
 
-
-
 # import numpy as np
 # import matplotlib.pyplot as plt
 # ax = plt.figure().add_subplot(projection='3d')
@@ -43,14 +41,26 @@
 # plt.close()
 
 
-import pickle
-import matplotlib.pyplot as plt
-ax = plt.plot([1,2,5,10])
-pickle.dump(ax, open("plot.pickle", "wb"))
+# import pickle
+# import matplotlib.pyplot as plt
+# ax = plt.plot([1,2,5,10])
+# pickle.dump(ax, open("plot.pickle", "wb"))
 
 
-import pickle
+# import pickle
+# import matplotlib.pyplot as plt   
+# ax = pickle.load(open("plot.pickle", "rb"))
+# plt.show()
+
+import numpy as np
 import matplotlib.pyplot as plt   
-ax = pickle.load(open("plot.pickle", "rb"))
+colors = plt.cm.nipy_spectral(np.linspace(0,1,30))
+
+print(colors)
+plt.figure()
+x = np.arange(0,10,1)
+for i in range(0,30):
+    plt.plot(x, i*x, color=colors[i])
+
 plt.show()
 

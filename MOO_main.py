@@ -1,6 +1,7 @@
 import sys
 import json
 import time
+from matplotlib.collections import PathCollection
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import colorbar, xcorr
 import pandas as pd
@@ -117,14 +118,15 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-# W1 = [0,1,0]
-# W2= [0,0,1]
-# W3 = [1,0,0]
+# W1 = [0]
+# W2= [0]
+# W3 = [1]
 
 obj1_arr = []
 obj2_arr = []
 obj3_arr = []
 opt_tim_arr = []
+All_opt_num_v = []
 
 for w in range(0,len(W1)):
 
@@ -168,8 +170,8 @@ for w in range(0,len(W1)):
     spn = 0 # sub_plot_no 
     Largest_TTv = []
 
-    start_date = 0
-    end_date = 1
+    start_date = 3
+    end_date = 4
 
 
     Weight = [ W1[w], W2[w], W3[w] ] 
@@ -313,19 +315,22 @@ for w in range(0,len(W1)):
     obj1_arr.append(viz_obj1)
     obj2_arr.append(viz_obj2)
     obj3_arr.append(viz_obj3)
-
+    All_opt_num_v.append(num_v)
 
     print("largest TTv = ", max(Largest_TTv) )
 
     viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time = convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_time)
     opt_tim_arr.append(viz_opt_time)
 
-    col_con1 = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo']
-    col_con = ['b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-']
-    col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx','bx','gx','rx','cx','mx','yx','kx','wx']
-    col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
-    col_stack = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w','b', 'g', 'r', 'c', 'm', 'y', 'k', 'w','b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-
+    #col_con1 = ['bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo','bo','go','ro','co','mo','yo','ko','wo']
+    #col_con = ['b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-','b-','g-','r-','c-','m-','y-','k-','w-']
+    #col_disc = ['bx','gx','rx','cx','mx','yx','kx','wx','bx','gx','rx','cx','mx','yx','bx','gx','rx','cx','mx','yx','kx','wx']
+    #col_I = ['b_','g_','r_','c_','m_','y_','k_','w_','b^','g^','r^','c^','m^','y^']
+    #col_stack = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w','b', 'g', 'r', 'c', 'm', 'y', 'k', 'w','b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    col_con1 = plt.cm.nipy_spectral(np.linspace(0,1,30))
+    col_con = plt.cm.nipy_spectral(np.linspace(0,1,30))
+    col_disc = plt.cm.nipy_spectral(np.linspace(0,1,30))
+    col_stack = plt.cm.nipy_spectral(np.linspace(0,1,30))
     ################ VISUALIZE Individual plots of objective values vs opt. time at each of the weight combinations ################
     # print(viz_opt_time,len(viz_obj1))
     # plt.figure()
@@ -352,7 +357,7 @@ for w in range(0,len(W1)):
     # ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
-    ################## VISUALIZE Current for each vehicle Vs. opti. time ################
+    # ################# VISUALIZE Current for each vehicle Vs. opti. time ################
     # for s in range(0,spn):
     #     fig,ax1 = plt.subplots(2)
     #     viz_tot_curr = np.array([0]*viz_MaxTT[s])
@@ -381,21 +386,23 @@ for w in range(0,len(W1)):
     #         viz_stack_y.append(y_temp)
     #         curr_stack[v] = y_temp
 
-    #         ax1[0].plot(x,y,col_con[v])
+    #         ax1[0].plot(x,y,color=col_con[v], label=col_con[v])
     #         ax1[0].set_xlabel('Time / (date-Hr-Min)')
     #         ax1[0].set_ylabel('Charging current / A', color='b')
 
-    #         ax1[1].plot(x1,y1,col_con[v])
+    #         ax1[1].plot(x1,y1,color=col_con[v])
     #         ax1[1].set_xlabel('Time / (date-Hr-Min)')
     #         ax1[1].set_ylabel('Charging cost / ($/Mwh)', color='b')
 
-    #     ax1[0].plot(viz_x_tot_cur,viz_tot_curr,col_con[v+1])
+    #     ax1[0].plot(viz_x_tot_cur,viz_tot_curr,color=col_con[v+1])
+    #     ax1[0].legend()
     #     # plt.figure()
     #     # plt.plot(viz_x_tot_cur,viz_tot_curr,'k-')
 
     #     ## Bar STACKPLOT
     #     df = pd.DataFrame(curr_stack, index=viz_x_tot_cur)
-    #     ax = df.plot.bar(stacked=True,color=col_stack)
+    #     if not df.empty:
+    #         ax = df.plot.bar(stacked=True,color=col_stack, )
 
     #    # # continuous STACKPLOT
     #    # print('\n')
@@ -403,34 +410,35 @@ for w in range(0,len(W1)):
     #    # y = np.vstack(viz_stack_y)
     #    # fig, ax = plt.subplots()
     #    # ax.stackplot(viz_x_tot_cur, y)
-    ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
+    # ###############    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
 
 ################## VISUALIZE Overall plots of objective values vs opt. time at each of the weight combinations ################
 plt.figure()
 plt.title('Objective function value    Vs.   optimization time for different weights')
-opt_time_instance = opt_tim_arr[0][4]
+opt_num = 9
+opt_time_instance = opt_tim_arr[0][opt_num]
 obj1_space = []
 l=len(obj1_arr)
 colors= plt.cm.Greens(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj1_arr[i] ,color=colors[i+2],marker='o')
-    obj1_space.append(obj1_arr[i][4])
+    obj1_space.append(obj1_arr[i][opt_num])
 
 obj2_space = []
 l=len(obj2_arr)
 colors= plt.cm.Blues(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj2_arr[i] ,color=colors[i+2],marker='o')
-    obj2_space.append(obj2_arr[i][4])
+    obj2_space.append(obj2_arr[i][opt_num])
 
 obj3_space = []
 l=len(obj3_arr)
 colors= plt.cm.Oranges(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj3_arr[i] ,color=colors[i+2],marker='o')
-    obj3_space.append(obj3_arr[i][4])
+    obj3_space.append(obj3_arr[i][opt_num])
 
 plt.text(viz_opt_time[0],0.002,'CC_obj1 = Light green to dark')
 plt.text(viz_opt_time[0],0.001,'BD_obj2 = Light blue to dark')
@@ -454,18 +462,18 @@ for v,s in enumerate(unique_space_id):
     print(len(viz_disconnect_time[v]))
     #stop = min([len(viz_disconnect_time[v]),len(viz_connect_time[v])])
     for l in viz_connect_time[v]:
-        ax2.plot(l,v,col_con1[v])
+        ax2.plot(l,v,color=col_con1[v],marker='o')
 
     for k in viz_disconnect_time[v]:
-        ax2.plot(k,v,col_disc[v])
+        ax2.plot(k,v,color=col_disc[v],marker='x')
 ax2.set_xlabel('Time / (date-Hr-Min)')
 ax2.set_ylabel('charging station / (#)')
 ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
+print(max(All_opt_num_v))
 
-
-################## VISUALIZE objective values Space curve for different weights: ################
+# ################## VISUALIZE objective values Space curve for different weights: ################
 ax = plt.figure().add_subplot(projection='3d')
 x = obj1_space
 y = obj2_space
@@ -478,7 +486,7 @@ ax.set_ylabel('Battery deg. obj')
 ax.set_zlabel('Availability obj ')
 ax.set_title('W1 = '+str(W1) + ', ' + 'W2 = '+str(W2) + ', ' +  'W3 = '+str(W3) )
 ax.legend()
-################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
+# ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 plt.show()
 
