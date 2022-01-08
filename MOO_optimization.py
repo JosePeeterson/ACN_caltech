@@ -1,4 +1,5 @@
 from MOO_apprx_bat_deg import MOO_bat_deg_obj
+#from MOO_PceWise_apprx_bat_deg import MOO_bat_deg_obj
 from MOO_rental_avail import MOO_rental_avail_obj
 from MOO_char_cost import MOO_char_cost_obj
 import gurobipy as gp
@@ -30,10 +31,10 @@ def mult_obj_opt(Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat
     for v in range(0,Nv):
         I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=Imax) )
 
-    max_timeslot = 307
-    max_current = 100
+    max_timeslot = 145
+    max_current = Imax
 
-    max_avail_val = max_current*Nv
+    max_avail_val = max_current*Nv*max_timeslot
     max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_timeslot
     max_char_cost = 98.37*max_timeslot*Nv*vbat*max_current*del_t
     

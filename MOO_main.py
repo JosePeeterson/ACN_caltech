@@ -118,15 +118,16 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-# W1 = [0]
-# W2= [0]
-# W3 = [1]
+W1 = [0]
+W2= [1]
+W3 = [0]
 
 obj1_arr = []
 obj2_arr = []
 obj3_arr = []
 opt_tim_arr = []
 All_opt_num_v = []
+obj_val_tim_val_w_val = {}
 
 for w in range(0,len(W1)):
 
@@ -165,13 +166,13 @@ for w in range(0,len(W1)):
     viz_obj3 = []
     viz_objSUM = []
     num_v = []
-
+    obj_val_time_val = {}
 
     spn = 0 # sub_plot_no 
     Largest_TTv = []
 
-    start_date = 3
-    end_date = 4
+    start_date = 0
+    end_date = 1
 
 
     Weight = [ W1[w], W2[w], W3[w] ] 
@@ -357,88 +358,87 @@ for w in range(0,len(W1)):
     # ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
-    # ################# VISUALIZE Current for each vehicle Vs. opti. time ################
-    # for s in range(0,spn):
-    #     fig,ax1 = plt.subplots(2)
-    #     viz_tot_curr = np.array([0]*viz_MaxTT[s])
-    #     viz_stack_y = []
-    #     curr_stack ={v:[] for v in range(0,Nv)}
+    ################# VISUALIZE Current for each vehicle Vs. opti. time ################
+    for s in range(0,spn):
+        fig,ax1 = plt.subplots(2)
+        viz_tot_curr = np.array([0]*viz_MaxTT[s])
+        viz_stack_y = []
+        curr_stack ={v:[] for v in range(0,Nv)}
 
-    #     for v in range(0,Nv):
-    #         x = []
-    #         y = []
-    #         x1 = []
-    #         y1 = []
+        for v in range(0,Nv):
+            x = []
+            y = []
+            x1 = []
+            y1 = []
 
-    #         for i in range(0,viz_TTv[s][v]):
-    #             x.append(viz_time_plot[s,v,i])
-    #             y.append(viz_curr_plot[s,v,i])
-    #             x1.append(viz_WEP_time_plot[s,v,i])
-    #             y1.append(viz_WEP_plot[s,v,i])
+            for i in range(0,viz_TTv[s][v]):
+                x.append(viz_time_plot[s,v,i])
+                y.append(viz_curr_plot[s,v,i])
+                x1.append(viz_WEP_time_plot[s,v,i])
+                y1.append(viz_WEP_plot[s,v,i])
 
-    #         y_temp = np.pad(y,(0,viz_MaxTT[s] - viz_TTv[s][v]),mode='constant')
-    #         x_temp = np.pad(x,(0,viz_MaxTT[s] - viz_TTv[s][v]),mode='constant')
+            y_temp = np.pad(y,(0,viz_MaxTT[s] - viz_TTv[s][v]),mode='constant')
+            x_temp = np.pad(x,(0,viz_MaxTT[s] - viz_TTv[s][v]),mode='constant')
 
-    #         viz_tot_curr = viz_tot_curr + y_temp
-    #         if viz_TTv[s][v] == viz_MaxTT[s]:
-    #             viz_x_tot_cur =x
+            viz_tot_curr = viz_tot_curr + y_temp
+            if viz_TTv[s][v] == viz_MaxTT[s]:
+                viz_x_tot_cur =x
                 
-    #         viz_stack_y.append(y_temp)
-    #         curr_stack[v] = y_temp
+            viz_stack_y.append(y_temp)
+            curr_stack[v] = y_temp
 
-    #         ax1[0].plot(x,y,color=col_con[v], label=col_con[v])
-    #         ax1[0].set_xlabel('Time / (date-Hr-Min)')
-    #         ax1[0].set_ylabel('Charging current / A', color='b')
+            ax1[0].plot(x,y,color=col_con[v], label=col_con[v])
+            ax1[0].set_xlabel('Time / (date-Hr-Min)')
+            ax1[0].set_ylabel('Charging current / A', color='b')
 
-    #         ax1[1].plot(x1,y1,color=col_con[v])
-    #         ax1[1].set_xlabel('Time / (date-Hr-Min)')
-    #         ax1[1].set_ylabel('Charging cost / ($/Mwh)', color='b')
+            ax1[1].plot(x1,y1,color=col_con[v])
+            ax1[1].set_xlabel('Time / (date-Hr-Min)')
+            ax1[1].set_ylabel('Charging cost / ($/Mwh)', color='b')
 
-    #     ax1[0].plot(viz_x_tot_cur,viz_tot_curr,color=col_con[v+1])
-    #     ax1[0].legend()
-    #     # plt.figure()
-    #     # plt.plot(viz_x_tot_cur,viz_tot_curr,'k-')
+        ax1[0].plot(viz_x_tot_cur,viz_tot_curr,color=col_con[v+1])
+        ax1[0].legend()
+        # plt.figure()
+        # plt.plot(viz_x_tot_cur,viz_tot_curr,'k-')
 
-    #     ## Bar STACKPLOT
-    #     df = pd.DataFrame(curr_stack, index=viz_x_tot_cur)
-    #     if not df.empty:
-    #         ax = df.plot.bar(stacked=True,color=col_stack, )
+        ## Bar STACKPLOT
+        df = pd.DataFrame(curr_stack, index=viz_x_tot_cur)
+        if not df.empty:
+            ax = df.plot.bar(stacked=True,color=col_stack, )
 
-    #    # # continuous STACKPLOT
-    #    # print('\n')
-    #    # print(len(viz_stack_y))
-    #    # y = np.vstack(viz_stack_y)
-    #    # fig, ax = plt.subplots()
-    #    # ax.stackplot(viz_x_tot_cur, y)
-    # ###############    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
+       # # continuous STACKPLOT
+       # print('\n')
+       # print(len(viz_stack_y))
+       # y = np.vstack(viz_stack_y)
+       # fig, ax = plt.subplots()
+       # ax.stackplot(viz_x_tot_cur, y)
+    ###############    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
 
 ################## VISUALIZE Overall plots of objective values vs opt. time at each of the weight combinations ################
 plt.figure()
 plt.title('Objective function value    Vs.   optimization time for different weights')
-opt_num = 9
-opt_time_instance = opt_tim_arr[0][opt_num]
-obj1_space = []
+
+
 l=len(obj1_arr)
 colors= plt.cm.Greens(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj1_arr[i] ,color=colors[i+2],marker='o')
-    obj1_space.append(obj1_arr[i][opt_num])
 
-obj2_space = []
+
+
 l=len(obj2_arr)
 colors= plt.cm.Blues(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj2_arr[i] ,color=colors[i+2],marker='o')
-    obj2_space.append(obj2_arr[i][opt_num])
 
-obj3_space = []
+
+
 l=len(obj3_arr)
 colors= plt.cm.Oranges(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj3_arr[i] ,color=colors[i+2],marker='o')
-    obj3_space.append(obj3_arr[i][opt_num])
+
 
 plt.text(viz_opt_time[0],0.002,'CC_obj1 = Light green to dark')
 plt.text(viz_opt_time[0],0.001,'BD_obj2 = Light blue to dark')
@@ -474,17 +474,27 @@ ax2.set_ylabel('charging station / (#)')
 print(max(All_opt_num_v))
 
 # ################## VISUALIZE objective values Space curve for different weights: ################
+opt_num = 0
+weit = 0 # weight that has opt. at all times 
+opt_time_instance = opt_tim_arr[weit][opt_num]
 ax = plt.figure().add_subplot(projection='3d')
-x = obj1_space
-y = obj2_space
-z = obj3_space
+
+x = []
+y = []
+z = []
+for w in range(0,len(W1)):
+    if( opt_time_instance in opt_tim_arr[w]):
+        index = opt_tim_arr[w].index(opt_time_instance)
+        x.append( obj1_arr[w][index] )
+        y.append( obj2_arr[w][index] )
+        z.append( obj3_arr[w][index] )
 #colors= plt.cm.rainbow(np.linspace(1,1,6))
 ax.plot(x, y, z,c='g',markevery=[0],marker='o')
 ax.plot(x, y, z, label='opt. time = ' + str(opt_time_instance),c='g',marker='x')
 ax.set_xlabel('Charging cost obj')
 ax.set_ylabel('Battery deg. obj')
 ax.set_zlabel('Availability obj ')
-ax.set_title('W1 = '+str(W1) + ', ' + 'W2 = '+str(W2) + ', ' +  'W3 = '+str(W3) )
+ax.set_title('W1 = '+str(W1) + ', \n' + 'W2 = '+str(W2) + ', \n' +  'W3 = '+str(W3) )
 ax.legend()
 # ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
