@@ -158,14 +158,13 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
                 m.addConstr(SOC_avg[v][i], GRB.EQUAL, SOC[v][i-1] + (0.5*(I[v][i]* del_t)) / Cbat[v])
                 #m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
 
-    max_time_slot = 466
+
     #####   Paramters of cyclic degradation     #####
-    max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_time_slot # all 3 
-    p00 =   1.038*10**-5
-    p10 =  -2.003*10**-5
-    p01 =   1.281*10**-6
-    p11 =   9.554*10**-7
-    p02 =  -1.124*10**-9
+    p00 =   1.099*10**-5
+    p10 =  -1.962*10**-5
+    p01 =   1.268*10**-6
+    p11 =   9.204*10**-7
+    p02 =  -1.159*10**-9
 
     #####   Paramters of calendric degradation     #####
     p1 =   5.387*10**-5
@@ -184,6 +183,9 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
         for i in range(0,TT[v]):
             #bat_SOC = m.addVar(soc_min,soc_max)
             m.addConstr(cap_loss[v][i], GRB.EQUAL, (p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg[v][i]*(I[v][i]) + p02*(I[v][i])**2 + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3 ) )
+            #m.addConstr(cap_loss[v][i], GRB.EQUAL, p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg[v][i]*(I[v][i]) + p02*(I[v][i])**2 )
+            #m.addConstr(cap_loss[v][i], GRB.EQUAL, ( p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg[v][i]*(I[v][i]) + p02*(I[v][i])**2 + p1*SOC_avg[v][i]*adj_var + p2 ) )
+            #m.addConstr(cap_loss[v][i], GRB.EQUAL, (q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3))
             #cap_loss = p00 + p10*SOC_avg[v][i] + p01*(I[v][i]) + p11*SOC_avg*(I[v][i]) + p02*(I[v][i])**2
 
 

@@ -7,11 +7,9 @@ import sys
 import datetime
 import dateutil
 
-def MOO_char_cost_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
+def MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     
     begin_time = dateutil.parser.parse(begin_time)
-
-    df = pd.read_csv('20210501-20210508 CAISO Average Price.csv')
 
     #print(len(df))
     # print(int(df['date'][2296][-5:-3]))
@@ -27,16 +25,19 @@ def MOO_char_cost_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_
     i = 0
     j=0
     while(i < len(df)):
-        date = str(df['date'][i][0:8])
-        hr = str(df['date'][i][-5:-3])
-        min = int(df['date'][i][-2:])
-        min = min + j
-        min = str(min)
+        # date = str(df['date'][i][0:8])
+        # hr = str(df['date'][i][-5:-3])
+        # min = int(df['date'][i][-2:])
+        # min = min + j
+        # min = str(min)
+        #print(str(df['date'][i]))
         price = df['price ($/MWh)'][i]
 
+        dt_Str = str(df['date'][i])
+        
         format_str = '%m/%d/%Y %H:%M' # The format
-        full_date = date + " " + hr + ":" + min
-        datetime_obj = datetime.datetime.strptime(full_date, format_str)
+        #full_date = date + " " + hr + ":" + min
+        datetime_obj = datetime.datetime.strptime(dt_Str, format_str) + datetime.timedelta(minutes=j)
         #print(datetime_obj)
         Minute_Elec_price[datetime_obj] = abs(price)/1000 # Mwh -> Kwh
 
@@ -67,7 +68,7 @@ def MOO_char_cost_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_
     SOC_xtra = 0.001
 
 
-
+    #print('\n',Minute_Elec_price,'\n')
 
 
 

@@ -1,5 +1,5 @@
-from MOO_apprx_bat_deg import MOO_bat_deg_obj
-#from MOO_PceWise_apprx_bat_deg import MOO_bat_deg_obj
+#from MOO_apprx_bat_deg import MOO_bat_deg_obj
+from MOO_PceWise_apprx_bat_deg import MOO_bat_deg_obj
 from MOO_rental_avail import MOO_rental_avail_obj
 from MOO_char_cost import MOO_char_cost_obj
 import gurobipy as gp
@@ -7,7 +7,7 @@ from gurobipy import GRB
 import math
 import sys
 
-def mult_obj_opt(Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
+def mult_obj_opt(Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
 
     m = gp.Model('moo')
     m.params.NonConvex = 2
@@ -15,7 +15,6 @@ def mult_obj_opt(Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat
     m.params.Presolve = 0
     m.reset(0)
 
-    Imax = 100
     Icmax = Nv*Imax
 
     t_s = 0
@@ -31,18 +30,20 @@ def mult_obj_opt(Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat
     for v in range(0,Nv):
         I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=Imax) )
 
-    max_timeslot = 145
+
     max_current = Imax
+    peak_cost = 98.37
+    peak_bat_deg = 3.2924*10**-4
 
     max_avail_val = max_current*Nv*max_timeslot
-    max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_timeslot
-    max_char_cost = 98.37*max_timeslot*Nv*vbat*max_current*del_t
+    max_bat_deg = peak_bat_deg*Nv*max_timeslot
+    max_char_cost = peak_cost*max_timeslot*Nv*vbat*max_current*del_t
     
     W1 = Weight[0]
     W2 = Weight[1]
     W3 = Weight[2]
 
-    WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
+    WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
 
     cap_loss_array,viz_timev_bat  = MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
 
@@ -57,8 +58,12 @@ def mult_obj_opt(Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat
 
     
     m.update()
-
+    print('\n Weights =', W1, W2, W3, '\n')
     m.optimize()
+    
+    if (m.Status == GRB.Status.INFEASIBLE):
+        m.computeIIS()
+        m.write("model.ilp")
 
     obj1 = m.getObjective(0)
     ob1 = obj1.getValue()
@@ -68,6 +73,42 @@ def mult_obj_opt(Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat
     ob3 = obj3.getValue()
 
     print('\n')
+    # ####################  CHECK SOLUTION AND OBJECTIVE FUNC. VALUES    ##########################
+    # print('\n' , 'my obj vals' , ob1, ob2, ob3)
+    # print('\n')
+
+    # # get the set of variables
+    # x = m. getVars()
+    # # Ensure status is optimal
+    # assert m.Status == GRB.Status.OPTIMAL
+    # # Query number of multiple objectives , and number of solutions
+    # nSolutions = m.SolCount
+    # nObjectives = m.NumObj
+    # print ('Problem has ' , nObjectives , ' objectives')
+    # print ('Gurobi found ', nSolutions , ' solutions ')
+    # # For each solution , print value of first three variables , and
+    # # value for each objective function
+    # solutions = []
+    # for s in range( nSolutions ):
+    #     # Set which solution we will query from now on
+    #     m.params.SolutionNumber = s
+    #     # Print objective value of this solution in each objective
+    #     print('Solution ' , s,':','\n')
+    #     for o in range( nObjectives ):
+    #         # Set which objective we will query
+    #         m.params.ObjNumber = o
+    #         # Query the o-th objective value
+    #         print('\n','objective value = ',m.ObjNVal , '\n')
+    #     # # print first three variables in the solution
+    #     # n = min(x)
+    #     # for j in range(n):
+    #     #     print(x[j]. VarName , x[j].Xn , end='')
+    #     # print('')
+
+    # # query the full vector of the o-th solution
+    # solutions.append(m.getAttr('Xn',x))
+    # ##############################################################################################
+
 
     I_temp = {}
 

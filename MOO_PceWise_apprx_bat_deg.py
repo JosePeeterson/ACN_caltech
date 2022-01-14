@@ -118,7 +118,7 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
             each_veh_curr.append(I[v][i])
         if(TT[v] > 0):
             m.addConstr( ( sum(each_veh_curr) )* del_t  <= (SOCdep[v] - SOC_1[v] + SOC_xtra)*Cbat[v]  )
-            print(v,i)
+
 
 
 
@@ -158,14 +158,8 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
                 m.addConstr(SOC_avg[v][i], GRB.EQUAL, SOC[v][i-1] + (0.5*(I[v][i]* del_t)) / Cbat[v])
                 #m.addConstr(SOC[v][i], GRB.EQUAL, bat_SOC)
 
-    max_time_slot = 466
-    #####   Paramters of cyclic degradation     #####
-    max_bat_deg = (3.382296793000000*10**-4 )*Nv*max_time_slot # all 3 
-    p00 =   1.038*10**-5
-    p10 =  -2.003*10**-5
-    p01 =   1.281*10**-6
-    p11 =   9.554*10**-7
-    p02 =  -1.124*10**-9
+
+
 
     #####   Paramters of calendric degradation     #####
     p1 =   5.387*10**-5
@@ -178,109 +172,47 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
     q3 =   1.134e-05
 
 
-    b1  = m.addVar(vtype=GRB.BINARY, name="b1")
-    b2  = m.addVar(vtype=GRB.BINARY, name="b2")
-    b3  = m.addVar(vtype=GRB.BINARY, name="b3")
-    b4  = m.addVar(vtype=GRB.BINARY, name="b4")
-    b5  = m.addVar(vtype=GRB.BINARY, name="b5")
+    b4 = []
+    b5 = []
 
-    eps = 0.0001
-    M = 120 + eps  # smallest possible given bounds on x and y
+    for v in range(0,Nv):
+        b4.append( m.addVars((TT[v]),vtype=GRB.BINARY) )
+        b5.append( m.addVars((TT[v]),vtype=GRB.BINARY) )
 
-    p00b1 = 3.205*10**-6    
-    p10b1 = -0.0001132
-    p01b1 = 1.64*10**-6
-    p11b1 = 2.936*10**-6
-    p02b1 = -5.472*10**-9
+    #####   Paramters of cyclic degradation, piecewise  objectives   #####
+    p00b1 = 4.169*10**-6    
+    p10b1 = -9.871*10**-5
+    p01b1 = 1.63*10**-6
+    p11b1 = 2.661*10**-6
+    p02b1 = -5.757*10**-9
 
-    p00b2 = 6.492*10**-6    
-    p10b2 = -6.808*10**-5   
-    p01b2 = 1.51*10**-6
-    p11b2 = 2.085*10**-6
-    p02b2 = -4.12*10**-9
-
-    p00b3 = 7.411*10**-6    
-    p10b3 = -2.378*10**-5   
-    p01b3 = 1.389*10**-6
-    p11b3 = 1.219*10**-6
-    p02b3 = -2.075*10**-9
-
-    p00b4 = 5.763*10**-6    
-    p10b4 = 1.011*10**-5   
-    p01b4 = 1.291*10**-6
-    p11b4 = 3.931*10**-7
-    p02b4 = 1.206*10**-9
-
-    p00b5 = 1.641*10**-6    
-    p10b5 = -1.809*10**-6   
-    p01b5 = 1.563*10**-6
-    p11b5 = 2.6*10**-7
-    p02b5 = 8.479*10**-10
+    p00b2 = 6.886*10**-6    
+    p10b2 = -1.075*10**-5   
+    p01b2 = 1.361*10**-6
+    p11b2 = 6.348*10**-7
+    p02b2 = -1.902*10**-10
 
     cap_loss = []
     for v in range(0,Nv):
         cap_loss.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=0.05) )
     for v in range(0,Nv):
         for i in range(0,TT[v]):
-            #bat_SOC = m.addVar(soc_min,soc_max)
-            obj1 = m.addVar(vtype=GRB.CONTINUOUS, name="obj1")
-            obj2 = m.addVar(vtype=GRB.CONTINUOUS, name="obj2")
-            obj3 = m.addVar(vtype=GRB.CONTINUOUS, name="obj3")
             obj4 = m.addVar(vtype=GRB.CONTINUOUS, name="obj4")
             obj5 = m.addVar(vtype=GRB.CONTINUOUS, name="obj5")
 
-            # m.addConstr( obj1, GRB.EQUAL, p00b1 + p10b1*SOC_avg[v][i] + p01b1*(I[v][i]) + p11b1*SOC_avg[v][i]*(I[v][i]) + p02b1*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3 )
-            # m.addConstr( obj2,GRB.EQUAL, p00b2 + p10b2*SOC_avg[v][i] + p01b2*(I[v][i]) + p11b2*SOC_avg[v][i]*(I[v][i]) + p02b2*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3)
-            # m.addConstr( obj3,GRB.EQUAL, p00b3 + p10b3*SOC_avg[v][i] + p01b3*(I[v][i]) + p11b3*SOC_avg[v][i]*(I[v][i]) + p02b3*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3)
-            # m.addConstr(obj4, GRB.EQUAL, p00b4 + p10b4*SOC_avg[v][i] + p01b4*(I[v][i]) + p11b4*SOC_avg[v][i]*(I[v][i]) + p02b4*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3)
-            # m.addConstr(obj5, GRB.EQUAL, p00b5 + p10b5*SOC_avg[v][i] + p01b5*(I[v][i]) + p11b5*SOC_avg[v][i]*(I[v][i]) + p02b5*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3)
+            m.addConstr( obj5, GRB.EQUAL, p00b1 + p10b1*SOC_avg[v][i] + p01b1*(I[v][i]) + p11b1*SOC_avg[v][i]*(I[v][i]) + p02b1*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2 )# + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3 )
+            m.addConstr( obj4,GRB.EQUAL, p00b2 + p10b2*SOC_avg[v][i] + p01b2*(I[v][i]) + p11b2*SOC_avg[v][i]*(I[v][i]) + p02b2*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2 )#  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3)
+
+            m.addConstr(  b4[v][i] + b5[v][i], GRB.EQUAL, 1 ) # b1[v][i] + b2[v][i] + b3[v][i] + b3[v][i] +
+
+            m.addGenConstrIndicator(b4[v][i], True, I[v][i] <= 960*SOC_avg[v][i])
+            m.addGenConstrIndicator(b5[v][i], True, I[v][i] >= 960*SOC_avg[v][i])
+
+            m.addConstr((b5[v][i] == 1) >> (cap_loss[v][i] ==  obj5), name="indicator_constr1")
+            m.addConstr((b4[v][i] == 1) >> (cap_loss[v][i] ==   obj4  ), name="indicator_constr2")
 
 
-            # m.addConstr(  b1 + b2 + b3 + b4 + b5 == 1 , name="single_region_constr")
-            # # Model if x>y then b1 = 1, otherwise b1 = 0
 
-            # m.addConstr(I[v][i] <= 120*SOC_avg[v][i] + eps - M * (1 - b1), name="bigM_constr1")
-            # m.addConstr(I[v][i] >= 120*SOC_avg[v][i] + eps - M * (1 - b2), name="bigM_constr2")
-            # m.addConstr(I[v][i] <= 240*SOC_avg[v][i] + eps - M * (1 - b2), name="bigM_constr3")
-            # m.addConstr(I[v][i] >= 240*SOC_avg[v][i] + eps - M * (1 - b3), name="bigM_constr3")
-            # m.addConstr(I[v][i] <= 480*SOC_avg[v][i] + eps - M * (1 - b3), name="bigM_constr4")
-            # m.addConstr(I[v][i] >= 480*SOC_avg[v][i] + eps - M * (1 - b4), name="bigM_constr5")
-            # m.addConstr(I[v][i] <= 960*SOC_avg[v][i] + eps - M * (1 - b4), name="bigM_constr6")
-            # m.addConstr(I[v][i] >= 960*SOC_avg[v][i] + eps - M * (1 - b5), name="bigM_constr7")
-          
-
-            # m.addConstr((b5 == 1) >> (cap_loss[v][i] ==  obj1), name="indicator_constr1")
-            # m.addConstr((b4 == 1) >> (cap_loss[v][i] ==   obj2  ), name="indicator_constr2")
-            # m.addConstr((b3 == 1) >> (cap_loss[v][i] ==  obj3  ), name="indicator_constr3")
-            # m.addConstr((b2 == 1) >> (cap_loss[v][i] ==  obj4  ), name="indicator_constr4")
-            # m.addConstr((b1 == 1) >> (cap_loss[v][i] ==  obj5  ), name="indicator_constr5")
-
-
-            obj1 >= p00b1 + p10b1*SOC_avg[v][i] + p01b1*(I[v][i]) + p11b1*SOC_avg[v][i]*(I[v][i]) + p02b1*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3 
-            obj2 >= p00b2 + p10b2*SOC_avg[v][i] + p01b2*(I[v][i]) + p11b2*SOC_avg[v][i]*(I[v][i]) + p02b2*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3
-            obj3 >= p00b3 + p10b3*SOC_avg[v][i] + p01b3*(I[v][i]) + p11b3*SOC_avg[v][i]*(I[v][i]) + p02b3*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3
-            obj4 >= p00b4 + p10b4*SOC_avg[v][i] + p01b4*(I[v][i]) + p11b4*SOC_avg[v][i]*(I[v][i]) + p02b4*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3
-            obj5 >= p00b5 + p10b5*SOC_avg[v][i] + p01b5*(I[v][i]) + p11b5*SOC_avg[v][i]*(I[v][i]) + p02b5*(I[v][i])**2  + p1*SOC_avg[v][i]*adj_var + p2  + q1*(I[v][i]/Cbat[v])**2 + q2*(I[v][i]/Cbat[v]) + q3
-
-
-            b1 + b2 + b3 + b4 + b5 == 1
-            # Model if x>y then b1 = 1, otherwise b1 = 0
-
-            b1 = 1 >> I[v][i] <= 120*SOC_avg[v][i]
-            b2 = 1 >> I[v][i] >= 120*SOC_avg[v][i]
-            b2 = 1 >> I[v][i] <= 240*SOC_avg[v][i]
-            b3 = 1 >> I[v][i] >= 240*SOC_avg[v][i] 
-            b3 = 1 >> I[v][i] <= 480*SOC_avg[v][i]
-            b4 = 1 >> I[v][i] >= 480*SOC_avg[v][i]
-            b4 = 1 >> I[v][i] <= 960*SOC_avg[v][i]
-            b5 = 1 >> I[v][i] >= 960*SOC_avg[v][i]
-          
-
-            b5 == 1 >> cap_loss[v][i] >=  obj1
-            b4 == 1 >> cap_loss[v][i] >=  obj2
-            b3 == 1 >> cap_loss[v][i] >=  obj3 
-            b2 == 1 >> cap_loss[v][i] >=  obj4 
-            b1 == 1 >> cap_loss[v][i] >=  obj5
 
 
 
@@ -289,12 +221,6 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             cap_loss_array.append(cap_loss[v][i])
-
-
-
-
-
-
 
 
 

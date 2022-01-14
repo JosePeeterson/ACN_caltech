@@ -78,7 +78,7 @@ def MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, d
             #print(v)
             #print(SOCdep[v],SOC_1[v],Cbat[v])
             m.addConstr( ( sum(each_veh_curr) )* del_t  >= (SOCdep[v] - SOC_1[v])*Cbat[v] )
-            print(v,i)
+
 
     # upper_bound Energy constraint
     for v in range(0,Nv):
@@ -87,7 +87,7 @@ def MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, d
             each_veh_curr.append(I[v][i])
         if(TT[v] > 0):
             m.addConstr( ( sum(each_veh_curr) )* del_t  <= (SOCdep[v] - SOC_1[v] + SOC_xtra )*Cbat[v] )
-            print(v,i)
+
 
     return tot_char_curr, weights
 
