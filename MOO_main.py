@@ -120,9 +120,9 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-W1 =[0.5]#.0,0.0,0.5,0.0]
-W2= [0.5]#.0,0.0,0.0,0.5]
-W3 =[0]#.0,1.0,0.5,0,5]
+# W1 =[0.5]#.0,0.0,0.5,0.0]
+# W2= [0.5]#.0,0.0,0.0,0.5]
+# W3 =[0]#.0,1.0,0.5,0,5]
 
 obj1_arr = []
 obj2_arr = []
@@ -133,15 +133,15 @@ obj_val_tim_val_w_val = {}
 
 for w in range(0,len(W1)):
     SOC_xtra = 0.1
-    st_width = 15 # timeslot width in mins
-    del_t = st_width/60 # every 15 minutes, in hours
-    Imax = 300
+    ts_width = 15 # timeslot width in mins
+    del_t = ts_width/60 # every 15 minutes, in hours
+    Imax = 800
     max_timeslot = 145  
     hr_of_day = 00
     min_of_day = 00
     Vbat = 410 #blueSG=234 prev. 410v
     soc_init = SOC_1 = [0]*len(unique_space_id) # 0 indicates No are at charging station
-    Cbat = [570]*len(unique_space_id)
+    Cbat = [600]*len(unique_space_id)
     sch_exist = False
     need_opt = False
 
@@ -177,7 +177,7 @@ for w in range(0,len(W1)):
     Largest_TTv = []
 
     start_date = 0
-    end_date = 12
+    end_date = 11
 
 
     Weight = [ W1[w], W2[w], W3[w] ] 
@@ -198,7 +198,7 @@ for w in range(0,len(W1)):
                         soc_init[v] = 0.1
                         SOC_1[v] = 0.1
                         SOCdep[v] = round( ((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) ) + soc_init[v],2)
-                        char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60) 
+                        char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60 + 15/60)  # add 15 more minutes to ensure that atleast 1 timeslot because we are taking ceil in TT calculation.
                         stn_id[v] = s
                         need_opt = True
 
@@ -236,7 +236,7 @@ for w in range(0,len(W1)):
                 print('SOCdep = ', SOCdep)
                 print('char_per = ', char_per)
                 for v,s in enumerate(unique_space_id):
-                    if(SOC_1[v] >= SOCdep[v]):
+                    if(SOC_1[v] + 0.0001 >= SOCdep[v] ):
                         SOCdep[v] = 0
                         SOC_1[v] = 0
                         char_per[v] = 0
@@ -293,7 +293,7 @@ for w in range(0,len(W1)):
             
             # # optimization implementation
             if ( sch_exist == True): # delta t is 15 minutes.
-                if (cnt == st_width):
+                if (cnt == ts_width):
                     i+=1
                     cnt=0
                 cnt+=1

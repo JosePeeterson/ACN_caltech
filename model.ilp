@@ -2,20 +2,17 @@
 \ LP format - for model browsing. Use MPS format to capture full model detail.
 Minimize multi-objectives
   OBJ0: Priority=0 Weight=1 AbsTol=1e-06 RelTol=0
-  
+   0 obj5
   OBJ1: Priority=0 Weight=0 AbsTol=1e-06 RelTol=0
   
   OBJ2: Priority=0 Weight=0 AbsTol=1e-06 RelTol=0.1
-   - 2.9933e-07 C68 - 2.56568e-07 C69 - 2.24497e-07 C70 - 1.99553e-07 C71
-   - 1.79598e-07 C72 - 1.63271e-07 C73
+   - 2.69397e-07 C42
 Subject To
- R253: 0.25 C68 + 0.25 C69 + 0.25 C70 + 0.25 C71 + 0.25 C72 + 0.25 C73
-   >= 194
+ R196: 0.25 C42 >= 170.6783735423701
+ R535: - 2.0833333333333335e-04 C42 + C204 = 0.6255360440960498
+ qc0: - 1.63e-06 C42 - 3.599e-05 C204 + obj5 + [ 5.757e-09 C42 ^2
+   - 2.661e-06 C42 * C204 ] = 5.7729e-05
 Bounds
- -infinity <= C68 <= 120
- -infinity <= C69 <= 120
- -infinity <= C70 <= 120
- -infinity <= C71 <= 120
- -infinity <= C72 <= 120
- -infinity <= C73 <= 120
+ -infinity <= C42 <= 800
+ C204 free
 End

@@ -21,7 +21,7 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
 
     TT = []
     for v in range(0,Nv):
-        TT.append( math.ceil((char_per[v] + t_s) / del_t) )
+        TT.append( math.ceil((char_per[v] + t_s) / del_t) ) # ceil to give atleast 1 timeslot of char_per < del_t
 
     max_TT = max(TT) 
 
