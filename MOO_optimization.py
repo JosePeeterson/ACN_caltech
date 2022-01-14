@@ -7,12 +7,12 @@ from gurobipy import GRB
 import math
 import sys
 
-def mult_obj_opt(Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
+def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
 
     m = gp.Model('moo')
     m.params.NonConvex = 2
 
-    m.params.Presolve = 0
+    #m.params.Presolve = 0
     m.reset(0)
 
     Icmax = Nv*Imax
@@ -43,11 +43,11 @@ def mult_obj_opt(Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,
     W2 = Weight[1]
     W3 = Weight[2]
 
-    WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
+    WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
 
-    cap_loss_array,viz_timev_bat  = MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
+    cap_loss_array,viz_timev_bat  = MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
 
-    tot_char_curr, weights = MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
+    tot_char_curr, weights = MOO_rental_avail_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
 
     m.ModelSense = GRB.MINIMIZE
 

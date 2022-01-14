@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import sys
 
-def MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
+def MOO_rental_avail_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat):
 
     #Nv = 3
     #Tdep = [10,4,8]
@@ -18,7 +18,6 @@ def MOO_rental_avail_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, d
     #Ebat = 300
     #SOCdep = [0.8, 0.6, 0.7]
     #SOC_1 = [0.1, 0.2, 0.1]
-    SOC_xtra = 0.001
 
 
     #print(TT)

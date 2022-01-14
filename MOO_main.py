@@ -120,9 +120,9 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-# W1 =[0.5]#.0,0.0,0.5,0.0]
-# W2= [0.5]#.0,0.0,0.0,0.5]
-# W3 =[0]#.0,1.0,0.5,0,5]
+W1 =[0.5]#.0,0.0,0.5,0.0]
+W2= [0.5]#.0,0.0,0.0,0.5]
+W3 =[0]#.0,1.0,0.5,0,5]
 
 obj1_arr = []
 obj2_arr = []
@@ -132,8 +132,9 @@ All_opt_num_v = []
 obj_val_tim_val_w_val = {}
 
 for w in range(0,len(W1)):
-
-    del_t = 15/60 # every 15 minutes, in hours
+    SOC_xtra = 0.1
+    st_width = 15 # timeslot width in mins
+    del_t = st_width/60 # every 15 minutes, in hours
     Imax = 300
     max_timeslot = 145  
     hr_of_day = 00
@@ -176,7 +177,7 @@ for w in range(0,len(W1)):
     Largest_TTv = []
 
     start_date = 0
-    end_date = 4
+    end_date = 12
 
 
     Weight = [ W1[w], W2[w], W3[w] ] 
@@ -255,7 +256,7 @@ for w in range(0,len(W1)):
                 #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
                 #TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
                 #TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
-                TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, obj1, obj2, obj3,max_TT = mult_obj_opt(Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time,Vbat)
+                TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, obj1, obj2, obj3,max_TT = mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time,Vbat)
                 viz_MaxTT.append(max_TT)
                 Largest_TTv.append(sum(TT))
                 viz_TTv.append(TT)
@@ -292,7 +293,7 @@ for w in range(0,len(W1)):
             
             # # optimization implementation
             if ( sch_exist == True): # delta t is 15 minutes.
-                if (cnt == 15):
+                if (cnt == st_width):
                     i+=1
                     cnt=0
                 cnt+=1

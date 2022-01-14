@@ -5,7 +5,7 @@ import sys
 import datetime
 import dateutil
 
-def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
+def MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time):
     # WITH taking ln
 
     begin_time = dateutil.parser.parse(begin_time)
@@ -20,7 +20,6 @@ def MOO_bat_deg_obj(m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,
     # Cbat = 20
     # SOCdep = [0.8, 0.6, 0.7]
     # SOC_1 = [0.1, 0.2, 0.1]
-    SOC_xtra = 0.001
     soc_min = 0
     soc_max = 1
 

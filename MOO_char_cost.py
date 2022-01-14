@@ -7,7 +7,7 @@ import sys
 import datetime
 import dateutil
 
-def MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
+def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     
     begin_time = dateutil.parser.parse(begin_time)
 
@@ -19,18 +19,19 @@ def MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, d
     # format_str = '%m/%d/%Y' # The format
     # datetime_obj = datetime.datetime.strptime(date, format_str)
     # print(str(datetime_obj.date()))
-
+    price_interval = 5 # price is given for how every how many mins?
     Minute_Elec_price = {}
 
     i = 0
     j=0
     while(i < len(df)):
-        # date = str(df['date'][i][0:8])
-        # hr = str(df['date'][i][-5:-3])
-        # min = int(df['date'][i][-2:])
-        # min = min + j
-        # min = str(min)
-        #print(str(df['date'][i]))
+        # dt_Str = str(df['date'][i])
+        # print(dt_Str)
+        # in_time = datetime.datetime.strptime(dt_Str, "%m/%d/%Y %I:%M:%S %p") 
+        # out_time = datetime.datetime.strftime(in_time, "%m/%d/%Y %H:%M") 
+        # format_str = '%m/%d/%Y %H:%M' # The format
+        # #full_date = date + " " + hr + ":" + min
+        # datetime_obj = datetime.datetime.strptime(out_time, format_str) + datetime.timedelta(minutes=j)
         price = df['price ($/MWh)'][i]
 
         dt_Str = str(df['date'][i])
@@ -42,7 +43,7 @@ def MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, d
         Minute_Elec_price[datetime_obj] = abs(price)/1000 # Mwh -> Kwh
 
         j+=1
-        if (j == 5):
+        if (j == price_interval):
             i+=1
             j=0
         
@@ -65,7 +66,7 @@ def MOO_char_cost_obj(df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, d
     # Ebat = 300
     # SOCdep = [0.8, 0.6, 0.7]
     # SOC_1 = [0.1, 0.2, 0.1]
-    SOC_xtra = 0.001
+    
 
 
     #print('\n',Minute_Elec_price,'\n')
