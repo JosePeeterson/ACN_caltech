@@ -1,4 +1,5 @@
 #from MOO_apprx_bat_deg import MOO_bat_deg_obj
+import winsound
 from MOO_PceWise_apprx_bat_deg import MOO_bat_deg_obj
 from MOO_rental_avail import MOO_rental_avail_obj
 from MOO_char_cost import MOO_char_cost_obj
@@ -21,7 +22,7 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
 
     TT = []
     for v in range(0,Nv):
-        TT.append( math.ceil((char_per[v] + t_s) / del_t) ) # ceil to give atleast 1 timeslot of char_per < del_t
+        TT.append( math.ceil((char_per[v] + t_s) / del_t) - 1  ) # ceil to give atleast 1 timeslot of char_per < del_t
 
     max_TT = max(TT) 
 
@@ -62,6 +63,9 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
     m.optimize()
     
     if (m.Status == GRB.Status.INFEASIBLE):
+        duration = 1000  # milliseconds
+        freq = 440  # Hz
+        winsound.Beep(freq, duration)
         m.computeIIS()
         m.write("model.ilp")
 

@@ -11,6 +11,7 @@ def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per,
     
     begin_time = dateutil.parser.parse(begin_time)
 
+    df = pd.read_csv('20210501-20210508 CAISO Average Price.csv')
     #print(len(df))
     # print(int(df['date'][2296][-5:-3]))
     # print(int(df['date'][2296][-2:]))

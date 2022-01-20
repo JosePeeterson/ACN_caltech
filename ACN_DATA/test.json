@@ -1,0 +1,90 @@
+{
+    "_meta":
+      {
+        "end": "Fri, 07 May 2021 19:00:00 GMT",
+        "min_kWh": 0,
+        "site": "caltech",
+        "start": "Sat, 01 May 2021 07:00:00 GMT"
+      },
+    "_items": [
+        {
+            "_id": "60a30a8cf9af8b5f076a3914",
+            "clusterID": "0039",
+            "connectionTime": "Sat, 01 May 2021 19:30:17 GMT",
+            "disconnectTime": "Sat, 01 May 2021 20:16:49 GMT",
+            "doneChargingTime": null,
+            "kWhDelivered": 15.688,
+            "sessionID": "2_39_81_4550_2021-05-01 15:29:44.728788",
+            "siteID": "0002",
+            "spaceID": "11900388",
+            "stationID": "2-39-81-4550",
+            "timezone": "America/Los_Angeles",
+            "userID": "000001316",
+            "userInputs": [
+              {
+                "WhPerMile": 283,
+                "kWhRequested": 8.3,
+                "milesRequested": 100,
+                "minutesAvailable": 40,
+                "modifiedAt": "Sat, 01 May 2021 15:30:17 GMT",
+                "paymentRequired": true,
+                "requestedDeparture": "Sat, 01 May 2021 23:30:17 GMT",
+                "userID": 1316
+              }
+            ]
+          },
+          {
+            "_id": "60a30a8cf9af8b5f076a3914",
+            "clusterID": "0039",
+            "connectionTime": "Sat, 01 May 2021 19:30:17 GMT",
+            "disconnectTime": "Sat, 01 May 2021 20:16:49 GMT",
+            "doneChargingTime": null,
+            "kWhDelivered": 15.688,
+            "sessionID": "2_39_81_4550_2021-05-01 15:29:44.728788",
+            "siteID": "0002",
+            "spaceID": "sjfka1",
+            "stationID": "2-39-81-4550",
+            "timezone": "America/Los_Angeles",
+            "userID": "000001316",
+            "userInputs": [
+              {
+                "WhPerMile": 283,
+                "kWhRequested": 35.3,
+                "milesRequested": 100,
+                "minutesAvailable": 160,
+                "modifiedAt": "Sat, 01 May 2021 15:30:17 GMT",
+                "paymentRequired": true,
+                "requestedDeparture": "Sat, 01 May 2021 23:30:17 GMT",
+                "userID": 1316
+              }
+            ]
+          },
+          {
+            "_id": "60a30a8cf9af8b5f076a3914",
+            "clusterID": "0039",
+            "connectionTime": "Sat, 01 May 2021 19:30:17 GMT",
+            "disconnectTime": "Sat, 01 May 2021 20:16:49 GMT",
+            "doneChargingTime": null,
+            "kWhDelivered": 15.688,
+            "sessionID": "2_39_81_4550_2021-05-01 15:29:44.728788",
+            "siteID": "0002",
+            "spaceID": "sjfka2",
+            "stationID": "2-39-81-4550",
+            "timezone": "America/Los_Angeles",
+            "userID": "000001316",
+            "userInputs": [
+              {
+                "WhPerMile": 283,
+                "kWhRequested": 6.3,
+                "milesRequested": 100,
+                "minutesAvailable": 120,
+                "modifiedAt": "Sat, 01 May 2021 15:30:17 GMT",
+                "paymentRequired": true,
+                "requestedDeparture": "Sat, 01 May 2021 23:30:17 GMT",
+                "userID": 1316
+              }
+            ]
+          }
+
+    ]
+  }

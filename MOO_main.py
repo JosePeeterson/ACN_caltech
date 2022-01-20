@@ -28,10 +28,10 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('ACN_DATA/acndata_sessions (7).json') as f:
+with open('ACN_DATA/test.json') as f:
     data = json.load(f)
 
-df = pd.read_csv('20210831-20211001 CAISO Average Price.csv')
+df = pd.read_csv('20210501-20210508 CAISO Average Price.csv')
 
 len_events = len(data['_items'])
 
@@ -120,9 +120,9 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-# W1 =[0.5]#.0,0.0,0.5,0.0]
-# W2= [0.5]#.0,0.0,0.0,0.5]
-# W3 =[0]#.0,1.0,0.5,0,5]
+W1 =[1,0,0]#.0,0.0,0.5,0.0]0,0.5,
+W2= [0,1,0]#.0,0.0,0.0,0.5]0.5,0,
+W3 =[0,0,1]#.0,1.0,0.5,0,5]0.5,0.5,
 
 obj1_arr = []
 obj2_arr = []
@@ -135,16 +135,16 @@ for w in range(0,len(W1)):
     SOC_xtra = 0.1
     ts_width = 15 # timeslot width in mins
     del_t = ts_width/60 # every 15 minutes, in hours
-    Imax = 800
-    max_timeslot = 145  
+    Imax = 53  #Type 2 43kw/410V = max = 104A, 22kw/410v = 53.6
+    max_timeslot = 130  
     hr_of_day = 00
     min_of_day = 00
     Vbat = 410 #blueSG=234 prev. 410v
     soc_init = SOC_1 = [0]*len(unique_space_id) # 0 indicates No are at charging station
-    Cbat = [600]*len(unique_space_id)
+    Cbat = [210]*len(unique_space_id) #600
     sch_exist = False
     need_opt = False
-
+  
     stn_id = [""]*len(unique_space_id)
     SOCdep = [0]*len(unique_space_id)
     char_per = [0]*len(unique_space_id)
@@ -177,7 +177,7 @@ for w in range(0,len(W1)):
     Largest_TTv = []
 
     start_date = 0
-    end_date = 11
+    end_date = 8
 
 
     Weight = [ W1[w], W2[w], W3[w] ] 
@@ -195,10 +195,13 @@ for w in range(0,len(W1)):
                 for j in range(0,len(All_space_data[s]['Connect_time'])):
                     
                     if( (date_str ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Connect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Connect_time'][j][20:22])) ):
-                        soc_init[v] = 0.1
-                        SOC_1[v] = 0.1
+                        
                         SOCdep[v] = round( ((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) ) + soc_init[v],2)
-                        char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60 + 15/60)  # add 15 more minutes to ensure that atleast 1 timeslot because we are taking ceil in TT calculation.
+                        soc_init[v] = 0.1#np.random.uniform(0.1,SOCdep[v])
+
+                        SOC_1[v] = soc_init[v]
+
+                        char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60 + 15/60)  # add 15 more minutes to ensure that atleast 1 timeslot because we are taking ceil in TT calculation. Can try to -1 from all TT[V]
                         stn_id[v] = s
                         need_opt = True
 
@@ -360,7 +363,7 @@ for w in range(0,len(W1)):
 
 
     # ################# VISUALIZE Current for each vehicle Vs. opti. time ################
-    # for s in range(0,spn):
+    # for s in [28]:#range(0,spn): # [37] 28
     #     fig,ax1 = plt.subplots(2)
     #     viz_tot_curr = np.array([0]*viz_MaxTT[s])
     #     viz_stack_y = []
@@ -425,33 +428,33 @@ for w in range(0,len(W1)):
 # ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
-# ################## VISUALIZE Overall plots of objective values vs opt. time at each of the weight combinations ################
-# plt.figure()
-# plt.title('Objective function value    Vs.   optimization time for different weights')
+################## VISUALIZE Overall plots of objective values vs opt. time at each of the weight combinations ################
+plt.figure()
+plt.title('Objective function value    Vs.   optimization time for different weights')
 
-# l=len(obj1_arr)
-# colors= plt.cm.Greens(np.linspace(0,1,l+2))
-# for i in range(0,l):
-#     plt.plot(opt_tim_arr[i],obj1_arr[i] ,color=colors[i+2],marker='o')
+l=len(obj1_arr)
+colors= plt.cm.Greens(np.linspace(0,1,l+2))
+for i in range(0,l):
+    plt.plot(opt_tim_arr[i],obj1_arr[i] ,color=colors[i+2],marker='o')
 
-# l=len(obj2_arr)
-# colors= plt.cm.Blues(np.linspace(0,1,l+2))
-# for i in range(0,l):
-#     plt.plot(opt_tim_arr[i],obj2_arr[i] ,color=colors[i+2],marker='o')
+l=len(obj2_arr)
+colors= plt.cm.Blues(np.linspace(0,1,l+2))
+for i in range(0,l):
+    plt.plot(opt_tim_arr[i],obj2_arr[i] ,color=colors[i+2],marker='o')
 
-# l=len(obj3_arr)
-# colors= plt.cm.Oranges(np.linspace(0,1,l+2))
-# for i in range(0,l):
-#     plt.plot(opt_tim_arr[i],obj3_arr[i] ,color=colors[i+2],marker='o')
+l=len(obj3_arr)
+colors= plt.cm.Oranges(np.linspace(0,1,l+2))
+for i in range(0,l):
+    plt.plot(opt_tim_arr[i],obj3_arr[i] ,color=colors[i+2],marker='o')
 
-# plt.text(viz_opt_time[0],0.002,'CC_obj1 = Light green to dark')
-# plt.text(viz_opt_time[0],0.001,'BD_obj2 = Light blue to dark')
-# plt.text(viz_opt_time[0],-0.001,'AV_obj3 = Light orange to dark')
-# plt.text(viz_opt_time[0],0.0075,'W1 = '+str(W1))
-# plt.text(viz_opt_time[0],0.0065,'W2 = '+str(W2))
-# plt.text(viz_opt_time[0],0.0055,'W3 = '+str(W3))
-# #plt.plot(viz_opt_time,viz_objSUM,'m-',label='Total cost')
-# ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
+plt.text(viz_opt_time[0],0.002,'CC_obj1 = Light green to dark')
+plt.text(viz_opt_time[0],0.001,'BD_obj2 = Light blue to dark')
+plt.text(viz_opt_time[0],-0.001,'AV_obj3 = Light orange to dark')
+plt.text(viz_opt_time[0],0.0075,'W1 = '+str(W1))
+plt.text(viz_opt_time[0],0.0065,'W2 = '+str(W2))
+plt.text(viz_opt_time[0],0.0055,'W3 = '+str(W3))
+#plt.plot(viz_opt_time,viz_objSUM,'m-',label='Total cost')
+################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 
 
 
@@ -478,7 +481,7 @@ ax2.set_ylabel('charging station / (#)')
 print(max(All_opt_num_v))
 
 # # ################## VISUALIZE objective values Space curve for different weights: ################
-# opt_num = 0 # 
+# opt_num = 28 # 
 # weit = 0 # choose btw 0 to len(w1)weight that has opt. at all times 
 # opt_time_instance = opt_tim_arr[weit][opt_num]
 # ax = plt.figure().add_subplot(projection='3d')
@@ -501,6 +504,36 @@ print(max(All_opt_num_v))
 # ax.set_title('W1 = '+str(W1) + ', \n' + 'W2 = '+str(W2) + ', \n' +  'W3 = '+str(W3) )
 # ax.legend()
 # # ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
+
+
+# ################## VISUALIZE all scatter plot of objective values Space curve for 3 different weights: ################
+
+ax = plt.figure().add_subplot(projection='3d')
+col = ['r*','g*','b*']
+
+
+for w in range(0,len(W1)):
+    x = []
+    y = []
+    z = []
+    print(obj1_arr[w][:])
+    x.append( obj1_arr[w][:] )
+    y.append( obj2_arr[w][:] )
+    z.append( obj3_arr[w][:] )
+    #colors= plt.cm.rainbow(np.linspace(1,1,6))
+    ax.plot(x[0], y[0], z[0],col[w])
+
+ax.set_xlabel('Charging cost obj')
+ax.set_ylabel('Battery deg. obj')
+ax.set_zlabel('Availability obj ')
+ax.set_title('W1 = '+str(W1) + ', \n' + 'W2 = '+str(W2) + ', \n' +  'W3 = '+str(W3) )
+ax.legend()
+
+# ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
+
+
+
+
 
 plt.show()
 

@@ -163,7 +163,7 @@ def MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_
     #####   Paramters of calendric degradation     #####
     ## p1 =   5.387*10**-5 # for 6 min timeslot
     ## p2 =   2.143*10**-5 # for 6 min timeslot
-    adj_var = 1 # adjustment variable to push the charging to later
+    adj_var = 2 # adjustment variable to push the charging to later
     p1 = 0.0001347
     p2 = 5.356*10**-5
 
