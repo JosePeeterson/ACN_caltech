@@ -28,7 +28,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('ACN_DATA/test.json') as f:
+with open('ACN_DATA/acndata_1_Week.json') as f:
     data = json.load(f)
 
 df = pd.read_csv('20210501-20210508 CAISO Average Price.csv')
@@ -120,9 +120,9 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-W1 =[1,0,0]#.0,0.0,0.5,0.0]0,0.5,
-W2= [0,1,0]#.0,0.0,0.0,0.5]0.5,0,
-W3 =[0,0,1]#.0,1.0,0.5,0,5]0.5,0.5,
+# W1 =[1,0,0]#.0,0.0,0.5,0.0]0,0.5,
+# W2= [0,1,0]#.0,0.0,0.0,0.5]0.5,0,
+# W3 =[0,0,1]#.0,1.0,0.5,0,5]0.5,0.5,
 
 obj1_arr = []
 obj2_arr = []
@@ -135,12 +135,12 @@ for w in range(0,len(W1)):
     SOC_xtra = 0.1
     ts_width = 15 # timeslot width in mins
     del_t = ts_width/60 # every 15 minutes, in hours
-    Imax = 53  #Type 2 43kw/410V = max = 104A, 22kw/410v = 53.6
+    Imax = 600  #Type 2 43kw/410V = max = 104A, 22kw/410v = 53.6
     max_timeslot = 130  
     hr_of_day = 00
     min_of_day = 00
     Vbat = 410 #blueSG=234 prev. 410v
-    soc_init = SOC_1 = [0]*len(unique_space_id) # 0 indicates No are at charging station
+    soc_init = SOC_1 = [0]*len(unique_space_id) # 0 indicates No vehicles are at charging station
     Cbat = [210]*len(unique_space_id) #600
     sch_exist = False
     need_opt = False
@@ -201,7 +201,7 @@ for w in range(0,len(W1)):
 
                         SOC_1[v] = soc_init[v]
 
-                        char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60 + 15/60)  # add 15 more minutes to ensure that atleast 1 timeslot because we are taking ceil in TT calculation. Can try to -1 from all TT[V]
+                        char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60)  # add 15 more minutes to ensure that atleast 1 timeslot because we are taking ceil in TT calculation. Can try to -1 from all TT[V]
                         stn_id[v] = s
                         need_opt = True
 
@@ -308,7 +308,9 @@ for w in range(0,len(W1)):
                         viz_I_time[v].append(tim)
 
                     if(char_per[v] > 0):
-                        char_per[v] = char_per[v] - (1/60) # reduce 1 minute (in hours) every time    
+                        char_per[v] = char_per[v] - (1/60) # reduce 1 minute (in hours) every time
+                    else:
+                        char_per[v] = 0    # this is for case where after subtraction above char_per had a < 1 min and thus resulted in neg value.
                 
             min_of_day+=1
             if (min_of_day == 60):
@@ -509,8 +511,7 @@ print(max(All_opt_num_v))
 # ################## VISUALIZE all scatter plot of objective values Space curve for 3 different weights: ################
 
 ax = plt.figure().add_subplot(projection='3d')
-col = ['r*','g*','b*']
-
+col = ['r*','g*','b*','m*', 'y*', 'k*', 'w*' ]
 
 for w in range(0,len(W1)):
     x = []

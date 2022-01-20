@@ -1,16 +1,17 @@
 \ Model moo_copy
 \ LP format - for model browsing. Use MPS format to capture full model detail.
 Minimize multi-objectives
-  OBJ0: Priority=0 Weight=1 AbsTol=1e-06 RelTol=0
+  OBJ0: Priority=0 Weight=0 AbsTol=1e-06 RelTol=0
   
-  OBJ1: Priority=0 Weight=0 AbsTol=1e-06 RelTol=0
+  OBJ1: Priority=0 Weight=1 AbsTol=1e-06 RelTol=0
   
   OBJ2: Priority=0 Weight=0 AbsTol=1e-06 RelTol=0.1
-   - 1.61264e-05 C0 - 1.20948e-05 C1 - 9.67586e-06 C2
+   - 2.59175e-06 C7 - 2.0734e-06 C8 - 1.72783e-06 C9 - 1.481e-06 C10
 Subject To
- R55: 0.25 C0 + 0.25 C1 + 0.25 C2 >= 144.9
+ R45: 0.25 C7 + 0.25 C8 + 0.25 C9 + 0.25 C10 >= 55.87083333333326
 Bounds
- -infinity <= C0 <= 53
- -infinity <= C1 <= 53
- -infinity <= C2 <= 53
+ -infinity <= C7 <= 53
+ -infinity <= C8 <= 53
+ -infinity <= C9 <= 53
+ -infinity <= C10 <= 53
 End
