@@ -31,7 +31,7 @@ def MOO_rental_avail_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per,
 
     for v in range(0,Nv):
         for i in range(0,TT[v]): 
-            weights.append(( 1/(TT[v] + i) ))
+            weights.append( 1/(TT[v] + i) )
             #weights.append((-1/TT[v])*i + 1)
             #weights.append(math.exp(-i))
 

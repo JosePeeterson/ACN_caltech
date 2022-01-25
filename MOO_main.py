@@ -120,9 +120,10 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-# W1 =[1,0,0]#.0,0.0,0.5,0.0]0,0.5,
-# W2= [0,1,0]#.0,0.0,0.0,0.5]0.5,0,
-# W3 =[0,0,1]#.0,1.0,0.5,0,5]0.5,0.5,
+W1 =[1,0,0,0.333]#.0,0.0,0.5,0.0]0,0.5,
+W2= [0,1,0,0.333]#.0,0.0,0.0,0.5]0.5,0,
+W3 =[0,0,1,0.333]#.0,1.0,0.5,0,5]0.5,0.5,
+
 
 obj1_arr = []
 obj2_arr = []
@@ -135,8 +136,8 @@ for w in range(0,len(W1)):
     SOC_xtra = 0.1
     ts_width = 15 # timeslot width in mins
     del_t = ts_width/60 # every 15 minutes, in hours
-    Imax = 600  #Type 2 43kw/410V = max = 104A, 22kw/410v = 53.6
-    max_timeslot = 130  
+    Imax = 53  #Type 2 43kw/410V = max = 104A, 22kw/410v = 53.6
+    max_timeslot = 69
     hr_of_day = 00
     min_of_day = 00
     Vbat = 410 #blueSG=234 prev. 410v
@@ -177,7 +178,7 @@ for w in range(0,len(W1)):
     Largest_TTv = []
 
     start_date = 0
-    end_date = 8
+    end_date = 1
 
 
     Weight = [ W1[w], W2[w], W3[w] ] 
@@ -196,9 +197,9 @@ for w in range(0,len(W1)):
                     
                     if( (date_str ==  All_space_data[s]['Connect_time'][j][5:16]) and (hr_of_day == int(All_space_data[s]['Connect_time'][j][17:19])) and (min_of_day == int(All_space_data[s]['Connect_time'][j][20:22])) ):
                         
-                        SOCdep[v] = round( ((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) ) + soc_init[v],2)
                         soc_init[v] = 0.1#np.random.uniform(0.1,SOCdep[v])
-
+                        SOCdep[v] = round( ((All_space_data[s]['kWhRequested'][j]*1000) / (Vbat*Cbat[v]) ) + soc_init[v],2)
+                        
                         SOC_1[v] = soc_init[v]
 
                         char_per[v] = (All_space_data[s]['Minutes_available'][j] / 60)  # add 15 more minutes to ensure that atleast 1 timeslot because we are taking ceil in TT calculation. Can try to -1 from all TT[V]
@@ -235,9 +236,6 @@ for w in range(0,len(W1)):
             # optimisation
             if ((sum(SOCdep) > 0) and (need_opt == True) ):
                 print('\n opt \n')
-                print('soc1 = ', SOC_1)
-                print('SOCdep = ', SOCdep)
-                print('char_per = ', char_per)
                 for v,s in enumerate(unique_space_id):
                     if(SOC_1[v] + 0.0001 >= SOCdep[v] ):
                         SOCdep[v] = 0
@@ -365,7 +363,7 @@ for w in range(0,len(W1)):
 
 
     # ################# VISUALIZE Current for each vehicle Vs. opti. time ################
-    # for s in [28]:#range(0,spn): # [37] 28
+    # for s in range(0,spn): # [37] 28
     #     fig,ax1 = plt.subplots(2)
     #     viz_tot_curr = np.array([0]*viz_MaxTT[s])
     #     viz_stack_y = []
@@ -517,12 +515,16 @@ for w in range(0,len(W1)):
     x = []
     y = []
     z = []
-    print(obj1_arr[w][:])
     x.append( obj1_arr[w][:] )
     y.append( obj2_arr[w][:] )
     z.append( obj3_arr[w][:] )
     #colors= plt.cm.rainbow(np.linspace(1,1,6))
     ax.plot(x[0], y[0], z[0],col[w])
+    for q in range(0,len(x[0])):
+        ax.text(x[0][q], y[0][q], z[0][q],str(q), color="red", fontsize=12)
+        print('\n')
+        print(x[0][q], y[0][q], z[0][q])
+
 
 ax.set_xlabel('Charging cost obj')
 ax.set_ylabel('Battery deg. obj')
