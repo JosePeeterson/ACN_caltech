@@ -5,13 +5,11 @@ import math
 
 
 
-def find_utopia_obj3(char_per,t_s,del_t,Imax,Nv,Icmax,SOCdep,SOC_1,Cbat,SOC_xtra,weights):
+def find_utopia_obj3(num_stab,char_per,t_s,del_t,Imax,Nv,Icmax,SOCdep,SOC_1,Cbat,SOC_xtra,weights):
 
     m3 = gp.Model('lin_prog3')
     m3.params.NonConvex = 2
     m3.reset(0)
-    num_stab = 1000 # provide numerical stability by avoiding very small coefficients
-
 
     TT3 = []
     for v in range(0,Nv):
@@ -58,7 +56,7 @@ def find_utopia_obj3(char_per,t_s,del_t,Imax,Nv,Icmax,SOCdep,SOC_1,Cbat,SOC_xtra
     m3.optimize()
     obj3 = m3.getObjective()
     utopia_obj3 = obj3.getValue() # utopia point 
-    print(utopia_obj3)
+    print('\n single obj3 = ',utopia_obj3)
 
     utopia_sol3 = {} # Decision variable, solution at utopia point 
     for v in range(0,Nv):

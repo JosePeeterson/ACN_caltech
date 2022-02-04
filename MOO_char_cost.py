@@ -88,7 +88,7 @@ def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per,
             WEPV.append( Minute_Elec_price[curr_time] )
             viz_WEPV[v].append( Minute_Elec_price[curr_time] )
             viz_timev_cost[v].append( curr_time )
-            curr_time = curr_time + datetime.timedelta(minutes=6)
+            curr_time = curr_time + datetime.timedelta(minutes=(del_t*60))
 
 
 

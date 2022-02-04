@@ -28,7 +28,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('ACN_DATA/acndata_1_Week.json') as f:
+with open('ACN_DATA/test.json') as f:
     data = json.load(f)
 
 df = pd.read_csv('20210501-20210508 CAISO Average Price.csv')
@@ -120,10 +120,12 @@ def convert_date_format(viz_connect_time,viz_disconnect_time,viz_opt_time,viz_I_
 
 W1,W2,W3 = weighted_objectives()
 
-W1 =[1,0,0,0.333]#.0,0.0,0.5,0.0]0,0.5,
-W2= [0,1,0,0.333]#.0,0.0,0.0,0.5]0.5,0,
-W3 =[0,0,1,0.333]#.0,1.0,0.5,0,5]0.5,0.5,
-
+W1 =list(np.arange(0,1,0.01)) # [1,0,0,0.333]#.0,0.0,0.5,0.0]0,0.5,
+W2= list(  1-(np.arange(0,1,0.01)) ) #[0,1,0,0.333]#.0,0.0,0.0,0.5]0.5,0,
+W3 =list(np.arange(0,1,0.01))#.0,1.0,0.5,0,5]0.5,0.5,
+# W1 =[0]
+# W2 =[0]
+# W3 =[0]
 
 obj1_arr = []
 obj2_arr = []
@@ -257,7 +259,7 @@ for w in range(0,len(W1)):
                 #TT, I_temp = optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
                 #TT, I_temp,viz_WEPV, viz_timev = cost_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
                 #TT, I_temp,viz_timev = bat_deg_optimization(Nv, SOCdep, char_per, SOC_1, del_t,Cbat,opt_time)
-                TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, obj1, obj2, obj3,max_TT = mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time,Vbat)
+                TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, obj1, obj2, obj3,max_TT,utopia_obj1, nadir_obj1, utopia_obj3, nadir_obj3  = mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, opt_time,Vbat)
                 viz_MaxTT.append(max_TT)
                 Largest_TTv.append(sum(TT))
                 viz_TTv.append(TT)
@@ -433,23 +435,23 @@ plt.figure()
 plt.title('Objective function value    Vs.   optimization time for different weights')
 
 l=len(obj1_arr)
-colors= plt.cm.Greens(np.linspace(0,1,l+2))
+colors= plt.cm.Oranges(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj1_arr[i] ,color=colors[i+2],marker='o')
 
 l=len(obj2_arr)
-colors= plt.cm.Blues(np.linspace(0,1,l+2))
+colors= plt.cm.Greens(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj2_arr[i] ,color=colors[i+2],marker='o')
 
 l=len(obj3_arr)
-colors= plt.cm.Oranges(np.linspace(0,1,l+2))
+colors= plt.cm.Blues(np.linspace(0,1,l+2))
 for i in range(0,l):
     plt.plot(opt_tim_arr[i],obj3_arr[i] ,color=colors[i+2],marker='o')
 
-plt.text(viz_opt_time[0],0.002,'CC_obj1 = Light green to dark')
-plt.text(viz_opt_time[0],0.001,'BD_obj2 = Light blue to dark')
-plt.text(viz_opt_time[0],-0.001,'AV_obj3 = Light orange to dark')
+plt.text(viz_opt_time[0],0.002,'CC_obj1 = Light orange to dark')
+plt.text(viz_opt_time[0],0.001,'BD_obj2 = Light green to dark')
+plt.text(viz_opt_time[0],-0.001,'AV_obj3 = Light blue to dark')
 plt.text(viz_opt_time[0],0.0075,'W1 = '+str(W1))
 plt.text(viz_opt_time[0],0.0065,'W2 = '+str(W2))
 plt.text(viz_opt_time[0],0.0055,'W3 = '+str(W3))
@@ -508,29 +510,37 @@ print(max(All_opt_num_v))
 
 # ################## VISUALIZE all scatter plot of objective values Space curve for 3 different weights: ################
 
-ax = plt.figure().add_subplot(projection='3d')
-col = ['r*','g*','b*','m*', 'y*', 'k*', 'w*' ]
+plt.figure()
+#ax = plt.figure().add_subplot(projection='3d')
+col = ['r*','g*','b*','m*', 'y*', 'k*', 'w*','r*','g*','b*','m*', 'y*', 'k*', 'w*']*20
 
 for w in range(0,len(W1)):
     x = []
     y = []
     z = []
     x.append( obj1_arr[w][:] )
-    y.append( obj2_arr[w][:] )
+    y.append( obj3_arr[w][:] )
     z.append( obj3_arr[w][:] )
     #colors= plt.cm.rainbow(np.linspace(1,1,6))
-    ax.plot(x[0], y[0], z[0],col[w])
-    for q in range(0,len(x[0])):
-        ax.text(x[0][q], y[0][q], z[0][q],str(q), color="red", fontsize=12)
-        print('\n')
-        print(x[0][q], y[0][q], z[0][q])
+    #ax.plot(x[0], y[0], z[0],col[w])
+    print('\n',x[0], y[0])
+    plt.plot(x[0], y[0], col[w])
+    plt.plot(nadir_obj1,nadir_obj3,'bo')
+    plt.plot(utopia_obj1,utopia_obj3,'bx')
+    plt.title('char_cost (x) Vs. Avail (y)  PARETO PLOT')
+    plt.text(0,0.00285,'Weights 0 - 1 with 0.01 incre')
+    plt.text(0,0,'num_stab = 10000')
+    # for q in range(0,len(x[0])):
+    #     ax.text(x[0][q], y[0][q], z[0][q],str(q), color="red", fontsize=12)
+    #     print('\n')
+        
 
 
-ax.set_xlabel('Charging cost obj')
-ax.set_ylabel('Battery deg. obj')
-ax.set_zlabel('Availability obj ')
-ax.set_title('W1 = '+str(W1) + ', \n' + 'W2 = '+str(W2) + ', \n' +  'W3 = '+str(W3) )
-ax.legend()
+# ax.set_xlabel('Charging cost obj')
+# ax.set_ylabel('Battery deg. obj')
+# ax.set_zlabel('Availability obj ')
+# ax.set_title('W1 = '+str(W1) + ', \n' + 'W2 = '+str(W2) + ', \n' +  'W3 = '+str(W3) )
+# ax.legend()
 
 # ################    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ####################
 

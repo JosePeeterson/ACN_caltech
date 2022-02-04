@@ -70,7 +70,7 @@ def MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_
         curr_time = begin_time
         for i in range(0,TT[v]):
             viz_timev_bat[v].append( curr_time )
-            curr_time = curr_time + datetime.timedelta(minutes=6)
+            curr_time = curr_time + datetime.timedelta(minutes=(del_t*60))
 
 
 
@@ -226,7 +226,7 @@ def MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_
 
 
 
-    return cap_loss_array,viz_timev_bat
+    return cap_loss_array,viz_timev_bat,cap_loss
 
 
 

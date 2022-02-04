@@ -5,12 +5,11 @@ import math
 
 
 
-def find_utopia_obj2(char_per,t_s,del_t,Imax,Nv,Icmax,SOCdep,SOC_1,Cbat,SOC_xtra):
+def find_utopia_obj2(num_stab,char_per,t_s,del_t,Imax,Nv,Icmax,SOCdep,SOC_1,Cbat,SOC_xtra):
 
     m2 = gp.Model('quad_prog')
     m2.params.NonConvex = 2
     m2.reset(0)
-    num_stab = 1000 # provide numerical stability by avoiding very small coefficients
 
     TT2 = []
     for v in range(0,Nv):
@@ -144,24 +143,18 @@ def find_utopia_obj2(char_per,t_s,del_t,Imax,Nv,Icmax,SOCdep,SOC_1,Cbat,SOC_xtra
             cap_loss_array2.append(cap_loss2[v][i])
 
 
-    m2.setObjective( num_stab*sum(cap_loss_array2), GRB.MINIMIZE)
+    m2.setObjective( sum([num_stab*c for c in cap_loss_array2]), GRB.MINIMIZE)
     m2.update()
     m2.optimize()
     obj2 = m2.getObjective()
     utopia_obj2 = obj2.getValue() # utopia point 
     print(utopia_obj2)
 
-    rec_b4 = {} # record results of binary variable
-    rec_b5 = {}
-    rec_coef_5 = [p00b1, p10b1, p01b1, p11b1, p02b1]
-    rec_coef_4 = [p00b2, p10b2, p01b2, p11b2, p02b2]
     utopia_I_sol2 = {} # Decision variable, solution at utopia point 
     utopia_SOC_avg_sol2 = {}
     for v in range(0,Nv):
         for i in range(0,TT2[v]):
             utopia_I_sol2[v,i] = I2[v][i].x
             utopia_SOC_avg_sol2[v,i] = SOC_avg2[v][i].x
-            rec_b4[v,i] = b4[v][i].x
-            rec_b5[v,i] = b5[v][i].x
 
-    return TT2,utopia_obj2, utopia_I_sol2, utopia_SOC_avg_sol2, rec_b4, rec_b5, rec_coef_5, rec_coef_4
+    return TT2,utopia_obj2, utopia_I_sol2, utopia_SOC_avg_sol2

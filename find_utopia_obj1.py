@@ -5,12 +5,11 @@ import math
 
 
 
-def find_utopia_obj1(WEPV,Nv,Imax,del_t,t_s,Icmax,SOCdep, char_per, SOC_1, SOC_xtra,Cbat):
+def find_utopia_obj1(num_stab,WEPV,Nv,Imax,del_t,t_s,Icmax,SOCdep, char_per, SOC_1, SOC_xtra,Cbat):
 
     m1 = gp.Model('lin_prog1')
     m1.params.NonConvex = 2
     m1.reset(0)
-    num_stab = 1000 # provide numerical stability by avoiding very small coefficients
 
     TT1 = []
     for v in range(0,Nv):
@@ -52,7 +51,7 @@ def find_utopia_obj1(WEPV,Nv,Imax,del_t,t_s,Icmax,SOCdep, char_per, SOC_1, SOC_x
             m1.addConstr( ( sum(each_veh_curr1) )* del_t  <= (SOCdep[v] - SOC_1[v] + SOC_xtra)*Cbat[v]  )
 
 
-    m1.setObjective( num_stab*sum([a*b for a,b in zip(tot_char_curr1,WEPV)]), GRB.MINIMIZE )
+    m1.setObjective( sum([num_stab*a*b for a,b in zip(tot_char_curr1,WEPV)]), GRB.MINIMIZE )
     m1.update()
     m1.optimize()
     obj1 = m1.getObjective()

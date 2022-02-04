@@ -7,6 +7,7 @@ from find_utopia_obj1 import find_utopia_obj1
 from find_utopia_obj2 import find_utopia_obj2
 from find_utopia_obj3 import find_utopia_obj3
 from evaluate_nadir_pnts import evaluate_nadir_pnts
+from two_obj_nadir import two_obj_nadir 
 import gurobipy as gp
 from gurobipy import GRB
 import math
@@ -35,19 +36,8 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
     for v in range(0,Nv):
         I.append( m.addVars((TT[v]), vtype=GRB.CONTINUOUS, lb=0, ub=Imax) )
 
-    def harm_sum(n):
-        g= 0.5772156649
-        sum = math.log(n) +g + 1/(2*n) - 1/(12*(n**2)) 
-        return sum
+    num_stab = 10000 # provide numerical stability by avoiding very small coefficients
 
-    max_current = Imax
-    peak_cost = 43
-    peak_bat_deg = 3.2924*10**-4
-    num_stab = 1000 # provide numerical stability by avoiding very small coefficients
-
-    max_avail_val = max_current*2*(harm_sum(2*max_timeslot) - harm_sum(max_timeslot))
-    max_bat_deg = peak_bat_deg*2*max_timeslot
-    max_char_cost = peak_cost*max_timeslot*2*vbat*max_current*del_t
     
     W1 = Weight[0]
     W2 = Weight[1]
@@ -60,25 +50,36 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
 
     WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
 
-    cap_loss_array,viz_timev_bat  = MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
+    cap_loss_array,viz_timev_bat,cap_loss  = MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
 
     tot_char_curr, weights = MOO_rental_avail_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
 
-    TT1,utopia_obj1, utopia_sol1 = find_utopia_obj1(WEPV,Nv,Imax,del_t,t_s,Icmax,SOCdep_n, char_per_n, SOC_1_n, SOC_xtra,Cbat)
-    TT2,utopia_obj2, utopia_I_sol2, utopia_SOC_avg_sol2, rec_b4, rec_b5, rec_coef_5, rec_coef_4 = find_utopia_obj2(char_per_n,t_s,del_t,Imax,Nv,Icmax,SOCdep_n,SOC_1_n,Cbat,SOC_xtra)
-    TT3,utopia_obj3, utopia_sol3 = find_utopia_obj3(char_per_n,t_s,del_t,Imax,Nv,Icmax,SOCdep_n,SOC_1_n,Cbat,SOC_xtra,weights)
-    nadir_obj1,nadir_obj2,nadir_obj3 = evaluate_nadir_pnts(Cbat,del_t,SOC_1_n,TT1,TT2,TT3,Nv,utopia_sol1,utopia_sol3,weights,WEPV,num_stab,utopia_I_sol2, utopia_SOC_avg_sol2, rec_b4, rec_b5, rec_coef_5, rec_coef_4)
+    TT1,utopia_obj1, utopia_sol1 = find_utopia_obj1(num_stab,WEPV,Nv,Imax,del_t,t_s,Icmax,SOCdep_n, char_per_n, SOC_1_n, SOC_xtra,Cbat)
+    #TT2,utopia_obj2, utopia_I_sol2, utopia_SOC_avg_sol2 = find_utopia_obj2(num_stab,char_per_n,t_s,del_t,Imax,Nv,Icmax,SOCdep_n,SOC_1_n,Cbat,SOC_xtra)
+    TT3,utopia_obj3, utopia_sol3 = find_utopia_obj3(num_stab,char_per_n,t_s,del_t,Imax,Nv,Icmax,SOCdep_n,SOC_1_n,Cbat,SOC_xtra,weights)
+    #nadir_obj1,nadir_obj2,nadir_obj3 = evaluate_nadir_pnts(Cbat,del_t,SOC_1_n,TT1,TT2,TT3,Nv,utopia_sol1,utopia_sol3,weights,WEPV,num_stab,utopia_I_sol2, utopia_SOC_avg_sol2)
+    TT2 = 1
+    utopia_I_sol2 = 1
+    utopia_SOC_avg_sol2 = 1
+    nadir_obj1,nadir_obj3 = two_obj_nadir(Cbat,del_t,SOC_1_n,TT1,TT2,TT3,Nv,utopia_sol1,utopia_sol3,weights,WEPV,num_stab,utopia_I_sol2, utopia_SOC_avg_sol2)
     #print(nadir_obj1,nadir_obj2,nadir_obj3)
 
  
-    m.ModelSense = GRB.MINIMIZE
+                    # m.ModelSense = GRB.MINIMIZE
 
     # use minimum weight of 10,000 for outright domination to be noticeable
-    m.setObjectiveN( ( num_stab*sum([a*b*vbat for a,b in zip(tot_char_curr,WEPV)]) - utopia_obj1 ) / ( nadir_obj1 - utopia_obj1 ) ,0,weight = W1)
-    m.setObjectiveN( ( num_stab*sum( cap_loss_array) - utopia_obj2) / (nadir_obj2 - utopia_obj2) ,1,weight = W2)
-    m.setObjectiveN( ( num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)]) ) - utopia_obj3 ) / (nadir_obj3 - utopia_obj3) ,2,weight = W3 )
+    #print('\n',utopia_obj1, nadir_obj1, utopia_obj2, nadir_obj2,'\n') #- utopia_obj1- utopia_obj2
+                    # m.setObjectiveN( 1*( ( sum([num_stab*a*b*vbat for a,b in zip(tot_char_curr,WEPV)]) - utopia_obj1 ) / ( nadir_obj1 - utopia_obj1 ) ) ,0,weight = 1)
+                    # m.setObjectiveN( 1*( ( sum( [num_stab*c for c in cap_loss_array]) - utopia_obj2 ) / (nadir_obj2 - utopia_obj2 ) ) ,1,weight = 1)
+                    # #m.setObjectiveN( ( num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)]) ) - utopia_obj3 ) / (nadir_obj3 - utopia_obj3) ,2,weight = W3 )
 
+    div_obj1 = 1/( nadir_obj1 - utopia_obj1 )
+    div_obj3 = 1/( nadir_obj3 - utopia_obj3 )
+
+    m.setObjective( W1*(  sum([num_stab*a*b for a,b in zip(tot_char_curr,WEPV)])  - utopia_obj1 )*div_obj1 +  W2*(   -1*num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)])) - utopia_obj3 )*div_obj3    , GRB.MINIMIZE )
     
+    #+  W2*( )*div_obj3
+
     m.update()
     print('\n Weights =', W1, W2, W3, '\n')
     m.optimize()
@@ -90,12 +91,21 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
         m.computeIIS()
         m.write("model.ilp")
 
-    obj1 = m.getObjective(0)
-    ob1 = obj1.getValue()
-    obj2 = m.getObjective(1)
-    ob2 = obj2.getValue()
-    obj3 = m.getObjective(2)
-    ob3 = obj3.getValue()
+    tot_char_curr_VAL = []
+    cap_loss_array_VAL = []
+    for v in range(0,Nv):
+        for i in range(0,TT[v]):
+            tot_char_curr_VAL.append(I[v][i].x)
+            cap_loss_array_VAL.append(cap_loss[v][i].x)
+
+    ob1 = (  sum([num_stab*a*b for a,b in zip(tot_char_curr_VAL,WEPV)])  )  # - utopia_obj1 *div_obj1
+    ob3 = ( -1*num_stab*(sum([a*b for a,b in zip(tot_char_curr_VAL,weights)])) ) # - utopia_obj2  *div_obj2
+                    # obj1 = m.getObjective(0)
+                    # ob1 = obj1.getValue()
+                    # obj2 = m.getObjective(1)
+                    # ob2 = obj2.getValue()
+                    # obj3 = m.getObjective(2)
+    ob2 = 1
 
     print('\n')
     # ####################  CHECK SOLUTION AND OBJECTIVE FUNC. VALUES    ##########################
@@ -153,7 +163,7 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
 
 
 
-    return TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, ob1, ob2, ob3,max_TT
+    return TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, ob1, ob2, ob3,max_TT, utopia_obj1, nadir_obj1, utopia_obj3, nadir_obj3
 
 
 
