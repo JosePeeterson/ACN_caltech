@@ -1,0 +1,65 @@
+{
+    "_meta":
+      {
+        "end": "Fri, 07 May 2021 19:00:00 GMT",
+        "min_kWh": 0,
+        "site": "caltech",
+        "start": "Sat, 01 May 2021 07:00:00 GMT"
+      },
+    "_items": [
+      
+      {
+        "_id": "60a30a8cf9af8b5f076a3918",
+        "clusterID": "0039",
+        "connectionTime": "Sat, 01 May 2021 20:02:06 GMT",
+        "disconnectTime": "Sat, 01 May 2021 21:40:51 GMT",
+        "doneChargingTime": "Sat, 01 May 2021 20:31:31 GMT",
+        "kWhDelivered": 1.188,
+        "sessionID": "2_39_90_26_2021-05-01 20:01:50.548708",
+        "siteID": "0002",
+        "spaceID": "CA-316",
+        "stationID": "2-39-90-26",
+        "timezone": "America/Los_Angeles",
+        "userID": "000000743",
+        "userInputs": [
+          {
+            "WhPerMile": 250,
+            "kWhRequested": 7.5,
+            "milesRequested": 30,
+            "minutesAvailable": 180,
+            "modifiedAt": "Sat, 01 May 2021 20:02:06 GMT",
+            "paymentRequired": true,
+            "requestedDeparture": "Sat, 01 May 2021 23:02:06 GMT",
+            "userID": 743
+          }
+        ]
+      },
+      {
+        "_id": "60a30a8cf9af8b5f076a3919",
+        "clusterID": "0039",
+        "connectionTime": "Sat, 01 May 2021 20:42:47 GMT",
+        "disconnectTime": "Sat, 01 May 2021 21:32:12 GMT",
+        "doneChargingTime": null,
+        "kWhDelivered": 30.936,
+        "sessionID": "2_39_81_4550_2021-05-01 20:42:39.133163",
+        "siteID": "0002",
+        "spaceID": "11900388",
+        "stationID": "2-39-81-4550",
+        "timezone": "America/Los_Angeles",
+        "userID": "000000915",
+        "userInputs": [
+          {
+            "WhPerMile": 286,
+            "kWhRequested": 71.5,
+            "milesRequested": 250,
+            "minutesAvailable": 721,
+            "modifiedAt": "Sat, 01 May 2021 20:42:46 GMT",
+            "paymentRequired": true,
+            "requestedDeparture": "Sun, 02 May 2021 08:43:47 GMT",
+            "userID": 915
+          }
+        ]
+      }      
+
+    ]
+  }

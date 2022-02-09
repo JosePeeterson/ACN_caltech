@@ -226,7 +226,7 @@ def MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_
 
 
 
-    return cap_loss_array,viz_timev_bat
+    return cap_loss_array,viz_timev_bat,cap_loss
 
 
 
