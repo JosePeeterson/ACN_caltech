@@ -7,11 +7,11 @@ import sys
 import datetime
 import dateutil
 
-def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
+def MOO_char_cost_obj(vbat,ts_width,SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time):
     
     begin_time = dateutil.parser.parse(begin_time)
 
-    df = pd.read_csv('20210501-20210508 CAISO Average Price.csv')
+    df = pd.read_csv('20210522-20210531 CAISO Average Price.csv')
     #print(len(df))
     # print(int(df['date'][2296][-5:-3]))
     # print(int(df['date'][2296][-2:]))
@@ -37,11 +37,11 @@ def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per,
 
         dt_Str = str(df['date'][i])
         
-        format_str = '%m/%d/%Y %H:%M' # The format
+        format_str = '%m/%d/%y %H:%M' # The format # use %y for week2 and %Y for week1
         #full_date = date + " " + hr + ":" + min
         datetime_obj = datetime.datetime.strptime(dt_Str, format_str) + datetime.timedelta(minutes=j)
         #print(datetime_obj)
-        Minute_Elec_price[datetime_obj] = abs(price)/1000 # Mwh -> Kwh
+        Minute_Elec_price[datetime_obj] = ((vbat/1000) * abs(price))/1000 # Mwh -> Kwh
 
         j+=1
         if (j == price_interval):
@@ -52,8 +52,20 @@ def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per,
     #print(Minute_Elec_price.values())
     #sys.exit()
  
-
-
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 0, 6)] = 27.5
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 0, 21)] = 27.8
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 0, 36)] = 27.3
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 0, 51)] = 27.5
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 1, 6)] = 27.8
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 1, 21)] = 24.3
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 0, 51)] = 27.5
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 1, 6)] = 27.8
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 1, 36)] = 24.3
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 0, 51)] = 22.5
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 1, 51)] = 23.8
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 2, 6)] = 21.3
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 2, 21)] = 23.8
+    Minute_Elec_price[ datetime.datetime(2021, 5, 30, 2, 6)] = 21.3
     # Nv = 3
     # Tdep = [10,4,8]
     # del_t = 2
@@ -88,7 +100,7 @@ def MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per,
             WEPV.append( Minute_Elec_price[curr_time] )
             viz_WEPV[v].append( Minute_Elec_price[curr_time] )
             viz_timev_cost[v].append( curr_time )
-            curr_time = curr_time + datetime.timedelta(minutes=6)
+            curr_time = curr_time + datetime.timedelta(minutes=ts_width)  # ts_width is timeslot width in mins
 
 
 

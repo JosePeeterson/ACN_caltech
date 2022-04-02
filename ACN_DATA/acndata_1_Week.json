@@ -1536,7 +1536,7 @@
       "userInputs": [
         {
           "WhPerMile": 286,
-          "kWhRequested": 85.8,
+          "kWhRequested": 75.8,
           "milesRequested": 300,
           "minutesAvailable": 634,
           "modifiedAt": "Fri, 07 May 2021 15:44:27 GMT",

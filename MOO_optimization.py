@@ -12,7 +12,7 @@ from gurobipy import GRB
 import math
 import sys
 
-def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
+def mult_obj_opt(ts_width,SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time,vbat):
 
     m = gp.Model('moo')
     m.params.NonConvex = 2
@@ -58,9 +58,9 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
     SOC_1_n = SOC_1
 
 
-    WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
+    WEPV,viz_WEPV, viz_timev_cost  = MOO_char_cost_obj(vbat,ts_width,SOC_xtra,df,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat, begin_time)
 
-    cap_loss_array,viz_timev_bat,cap_loss  = MOO_bat_deg_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
+    cap_loss_array,viz_timev_bat,cap_loss  = MOO_bat_deg_obj(ts_width,SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat,begin_time)
 
     tot_char_curr, weights = MOO_rental_avail_obj(SOC_xtra,m,I,TT,max_TT,Imax,Icmax,Nv, SOCdep, char_per, SOC_1, del_t,Cbat)
 
@@ -70,19 +70,18 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
     nadir_obj1,nadir_obj2,nadir_obj3 = evaluate_nadir_pnts(Cbat,del_t,SOC_1_n,TT1,TT2,TT3,Nv,utopia_sol1,utopia_sol3,weights,WEPV,num_stab,utopia_I_sol2, utopia_SOC_avg_sol2, rec_b4, rec_b5, rec_coef_5, rec_coef_4)
     #print(nadir_obj1,nadir_obj2,nadir_obj3)
 
- 
+
     m.ModelSense = GRB.MINIMIZE
 
     # use minimum weight of 10,000 for outright domination to be noticeable
-    # m.setObjectiveN( ( num_stab*sum([a*b*vbat for a,b in zip(tot_char_curr,WEPV)]) - utopia_obj1 ) / ( nadir_obj1 - utopia_obj1 ) ,0,weight = W1)
-    # m.setObjectiveN( ( num_stab*sum( cap_loss_array) - utopia_obj2) / (nadir_obj2 - utopia_obj2) ,1,weight = W2)
-    # m.setObjectiveN( ( num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)]) ) - utopia_obj3 ) / (nadir_obj3 - utopia_obj3) ,2,weight = W3 )
+    # m.setObjectiveN( ( num_stab*sum([a*b*vbat for a,b in zip(tot_char_curr,WEPV)]) - utopia_obj1 ) / ( nadir_obj1 - utopia_obj1 ) ,0,priority = 2)
+    # m.setObjectiveN( ( num_stab*sum( cap_loss_array) - utopia_obj2) / (nadir_obj2 - utopia_obj2) ,1,priority = 3)
+    # m.setObjectiveN( ( -1*num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)]) ) - utopia_obj3 ) / (nadir_obj3 - utopia_obj3) ,2,priority = 1 )
 
     div_obj1 = 1/( nadir_obj1 - utopia_obj1 )
     div_obj2 = 1/( nadir_obj2 - utopia_obj2 )
     div_obj3 = 1/( nadir_obj3 - utopia_obj3 )
-
-    m.setObjective( W1*(  sum([num_stab*a*b for a,b in zip(tot_char_curr,WEPV)])  - utopia_obj1 )*div_obj1 + W2*( num_stab*sum( cap_loss_array) - utopia_obj2 )*div_obj2 + W3*(   -1*num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)])) - utopia_obj3 )*div_obj3    , GRB.MINIMIZE )
+    m.setObjective( W1*(  sum([num_stab*a*b*vbat for a,b in zip(tot_char_curr,WEPV)])  - utopia_obj1 )*div_obj1 + W2*( num_stab*sum( cap_loss_array) - utopia_obj2 )*div_obj2 + W3*(   -1*num_stab*(sum([a*b for a,b in zip(tot_char_curr,weights)])) - utopia_obj3 )*div_obj3    , GRB.MINIMIZE )
 
     
     m.update()
@@ -155,11 +154,16 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
 
 
     I_temp = {}
+    peak_load_percent = 0.75 # 0 - 1
+    peak_per_veh=[0]*Nv
 
     for v in range(0,Nv):
         for i in range(0,TT[v]):
             I_temp[v,i] = I[v][i].x
             #I_temp.append([v,i,I[v][i].x])
+            if( I[v][i].x >= peak_load_percent*Imax ):
+                peak_per_veh[v]+=1
+
 
     # Status checking
     status = m.Status
@@ -172,7 +176,7 @@ def mult_obj_opt(SOC_xtra,Imax,max_timeslot,df,Weight,Nv, SOCdep, char_per, SOC_
 
 
 
-    return TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, ob1, ob2, ob3,max_TT
+    return TT, I_temp, viz_timev_bat, viz_WEPV, viz_timev_cost, ob1, ob2, ob3,max_TT,peak_per_veh
 
 
 

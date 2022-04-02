@@ -31,7 +31,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-with open('ACN_DATA/acndata_sessions (7).json') as f:
+with open('ACN_DATA/acndata_1_week2.json') as f:
     data = json.load(f)
 
 len_events = len(data['_items'])
